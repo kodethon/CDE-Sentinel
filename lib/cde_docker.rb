@@ -146,6 +146,11 @@ module CDEDocker
 
 		end
 
+		def self.container_toks (container_name)
+			toks = container_name.rpartition('-')
+			return toks[0], toks[2]
+		end
+
 		def self.container_basename(container_name)
 			return container_name.split('-')[0]
 		end
