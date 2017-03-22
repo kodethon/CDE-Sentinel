@@ -1,6 +1,6 @@
 namespace :admin do
 
-	desc ""
+	desc "Maintain containers with terminal attached"
 	task :check_terms => :environment do
 		containers = Docker::Container.all
 		uniq_containers = {}
@@ -52,6 +52,7 @@ namespace :admin do
 
 	end
 
+	desc "If disk grows by a certain rate, fix that"
 	task :check_disk => :enviroment do 
 
 		snapshot = Vmstat.snapshot
@@ -60,6 +61,12 @@ namespace :admin do
 		cur_available_disk = disk['available_blocks']
 		prev_available_disk = Rails.cache.read(Constants.cache[:AVAILABLE_DISK])
 		diff = block_size * (cur_available_disk - prev_available_disk)
+		
+		# Check for disk growth rate
+
+		# For each container (term container?)
+		# Run du -sh to get space used
+		# Stop mis-behaving containers
 
 	end
 
