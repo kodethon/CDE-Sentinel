@@ -19,10 +19,23 @@
 
 # Learn more: http://github.com/javan/whenever
 
+env :MASTER_IP_ADDR, ENV['MASTER_IP_ADDR']
+env :MASTER_PORT, ENV['MASTER_PORT']
+env :HOST_IP_ADDR, ENV['HOST_IP_ADDR']
+env :HOST_PORT, ENV['HOST_PORT']
+env :GROUP_PASSWORD, ENV['GROUP_PASSWORD']
+env :NO_HTTPS, ENV['NO_HTTPS']
+
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
-every 1.day, :at => '1:00 pm' do # 5AM PST
+every 5.minutes do 
+	rake "admin:check_terms"
 end
 
-every 1.week, :at => '1:00 pm' do # 5AM PST
+every 1.minute do
+	rake "admin:check_app"	
+end
+
+every 1.hour do
+	rake "admin:clean_fc"
 end

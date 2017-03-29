@@ -1,10 +1,21 @@
 namespace :admin do
+	
+	desc "Check if main app is running"
+	task :check_app => :environment do
+		Rails.logger.info "Checking %s:%s" % [ENV['HOST_IP_ADDR'], ENV['HOST_PORT']]
+		responding = ApplicationHelper.up? ENV['HOST_IP_ADDR'], ENV['HOST_PORT']		
+		
+		if responding
+			res = ApplicationHelper.emit_to_master 
+			Rails.logger.info "Successfully updated master!" if res.code == '200'
+		end
+	end
 
-	desc "Maintain containers with terminal attached"
+	desc "Check CPU intensive processes in containers with terminal attached"
 	task :check_terms => :environment do
 		containers = Docker::Container.all
 		uniq_containers = {}
-		
+	
 		for c in containers
 			name = c.info['Names'][0]
 			name[0] = '' # Remove the slash
@@ -25,6 +36,8 @@ namespace :admin do
 		end
 
 		for c in container_with_term
+			
+			next if not CDEDocker.check_alive(c)
 
 			# Get top 5 proccesses with highest CPU usage
 			stdout, stderr, status = CDEDocker.exec(
@@ -43,13 +56,22 @@ namespace :admin do
 						['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, c)
 					active_time = stdout[0].split().join('').to_i
 
+					Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
+
 					# Give the process 5 minutes of runtime
-					CDEDocker.stop(c) if active_time > 300
+					if active_time > 300
+						Rails.logger.info "Killing the process..."
+						#CDEDocker.stop(c) 
+						CDEDocker.exec(['kill', '-9', columns[1]], {}, c)
+					end
+
 				end # if
 
-			end # for
-		end
+			end # for r in rows
 
+		end # for c in container_with_term
+
+		sleep 1
 	end
 
 	desc "If disk grows by a certain rate, fix that"
@@ -80,7 +102,7 @@ namespace :admin do
 			name = c.info['Names'][0]
 			next if name.split(//).last(3).join("").to_s != '-fc'
 			keep = false
-			
+	
 			# Check if user has been non-idle for last hour
 			name[0] = '' # Remove the slash
 			basename = CDEDocker::Utils.container_basename(name)
@@ -97,6 +119,7 @@ namespace :admin do
 				started_at = container.info['State']['StartedAt']
 				timestamp = DateTime.rfc3339(started_at)
 				keep = false if Time.now - timestamp > 604800
+				Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
 			end
 
 			if not keep

@@ -21,7 +21,6 @@ module CdeBackup
     # config.i18n.default_locale = :de
     
     config.eager_load_paths << Rails.root.join('lib')
-
 		cache_host = "%s:%s" % [ENV['MEMCACHE_PORT_11211_TCP_ADDR'], ENV['MEMCACHE_PORT_11211_TCP_PORT']]
 		config.cache_store = :dalli_store, cache_host, { :pool_size => 16 }
 
