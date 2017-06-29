@@ -146,7 +146,7 @@ namespace :admin do
 					http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
 					response = http.request_get('/application/ping')
 					response.code == "200"
-					uri = '/containers/disk_usage'
+					uri = '/containers/update_disk_usage'
 					req = Net::HTTP.post_form(uri,'name' => container_name, 'disk_usage' => disk_size, 'group_name' => group_name)
 				rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ECONNREFUSED
 
