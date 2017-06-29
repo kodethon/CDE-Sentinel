@@ -28,6 +28,11 @@ env :NO_HTTPS, ENV['NO_HTTPS']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
+
+every 1.minute do
+	rake "admin:check_disk"
+end
+
 every 5.minutes do 
 	rake "admin:check_terms"
 end
@@ -39,3 +44,4 @@ end
 every 1.hour do
 	rake "admin:clean_fc"
 end
+
