@@ -5,7 +5,8 @@ module ClusterProxy
 		def self.get(action)
 			return {
 				'update-node' => '/application/update_node',
-				'announce' => '/application/acknowledge'
+				'announce' => '/application/acknowledge',
+				'update-disk-usage' => '/containers/update_disk_usage'
 			}[action]
 		end
 
@@ -54,6 +55,17 @@ module ClusterProxy
 			return nil if url.nil?
 
 			return send_post_request(url, params)
+		end
+
+		def self.update_disk_usage(group_name, container_name, disk_usage)
+            url = get_master_endpoint('update-disk-usage')
+            return nil if url.nil?
+
+            return send_post_request(url, {
+               :group_name => group_name,
+               :container_name => container_name,
+               :disk_usage => disk_usage
+            })
 		end
 
 	end
