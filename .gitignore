@@ -19,3 +19,5 @@
 .*sw*
 .byebug_history
 config/settings.yml
+
+vender/bundle/*
