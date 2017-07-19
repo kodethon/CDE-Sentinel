@@ -20,7 +20,8 @@ module Utils
 			http = Net::HTTP.new(url.host, url.port)
 			http.read_timeout = 15 # seconds
 			http.open_timeout = 5
-			http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
+			#http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
+			http.use_ssl = (url.scheme == 'https')
 			
 			post_data = URI.encode_www_form(params)
 			res = http.request_post(url.path, post_data)
