@@ -29,7 +29,11 @@ env :NAMESPACE, ENV['NAMESPACE']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
-every 7.minutes do 
+every 1.minute do
+	rake "admin:check_disk"
+end
+
+every 5.minutes do 
 	rake "admin:check_terms"
 end
 
@@ -45,3 +49,4 @@ end
 every 1.day, :at => '4:30 am' do
 	command "ps -aux | grep 'tail -f /tmp/pipes/pin' | awk '{print $2}' | xargs kill -9"
 end
+
