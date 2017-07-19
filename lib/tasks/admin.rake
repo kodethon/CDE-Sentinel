@@ -13,6 +13,8 @@ namespace :admin do
 
 	desc "Check CPU intensive processes in containers with terminal attached"
 	task :check_terms => :environment do
+		Rails.logger.info "Checking CPU intensive processes in containers at %s" % Time.now.to_s
+
 		containers = Docker::Container.all
 		uniq_containers = {}
 	
@@ -20,8 +22,13 @@ namespace :admin do
 			name = c.info['Names'][0]
 			name[0] = '' # Remove the slash
 			basename, env = CDEDocker::Utils.container_toks(name)
-			next if env == 'fc' or env.nil?
-			
+
+			# Skip file system containers
+			next if env == 'fc' or env == 'fs' or env.nil?
+
+			# Skip node components
+			next if basename[0...ENV['NAMESPACE'].length] == ENV['NAMESPACE']
+
 			uniq_containers[basename] = [] if uniq_containers[basename].nil?
 			uniq_containers[basename].push(env)
 		end # for c in containers
@@ -54,12 +61,18 @@ namespace :admin do
 				if columns[2].to_i > 30
 					stdout, stderr, status = CDEDocker.exec(
 						['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, c)
+
+					if stdout[0].nil?
+						Rails.logger.debug stderr
+						next
+					end
+
 					active_time = stdout[0].split().join('').to_i
 
 					Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
 
-					# Give the process 5 minutes of runtime
-					if active_time > 300
+					# Give the process 3 minutes of runtime
+					if active_time > 180
 						Rails.logger.info "Killing the process..."
 						#CDEDocker.stop(c) 
 						CDEDocker.exec(['kill', '-9', columns[1]], {}, c)
@@ -93,18 +106,23 @@ namespace :admin do
 	end
 
 	# rake admin:clean_fc
-	desc "Clean file system clients"
-	task :clean_fc => :environment do
+	desc "Garbage collect fs containers"
+	task :clean_fs => :environment do
+		Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
+
 		containers = Docker::Container.all
 		now = Time.now
 
 		for c in containers
 			name = c.info['Names'][0]
-			next if name.split(//).last(3).join("").to_s != '-fc'
+			extension = name.split(//).last(3).join("").to_s
+			next if extension != '-fc' and extension != '-fs'
+			name[0] = '' # Remove the slash
+			#next if name[0...3] == 'CDE'
+
 			keep = false
 	
 			# Check if user has been non-idle for last hour
-			name[0] = '' # Remove the slash
 			basename = CDEDocker::Utils.container_basename(name)
 			last_updated = Rails.cache.read(basename + Constants.cache[:LAST_WRITE])
 
@@ -112,7 +130,9 @@ namespace :admin do
 				keep = (now - last_updated < 3600)
 				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 3600]
 			end
-
+			
+			# File system servers have a week to live
+			keep = true if extension == '-fs'
 			if keep
 				# Check if container has been started this week
 				container = Docker::Container.get(c.id)
@@ -124,7 +144,7 @@ namespace :admin do
 
 			if not keep
 				puts "Stopping container %s..." % name
-				CDEDocker.stop(name) 
+				CDEDocker.kill(name) 
 			end
 
 			sleep 1
