@@ -93,82 +93,35 @@ namespace :admin do
 	task :check_disk => :environment do 
 		max_disk_size = 10 ** 9
 		max_diff_rate = 10 ** 7 
-		containers = Docker::Container.all
-		container_with_term = []
-		for c in containers
-			name = c.info['Names'][0]
-			id = c.info['id']
-			name[0] = '' # Remove the slash
-			basename, env = CDEDocker::Utils.container_toks(name)
-			#Changed to only remove terminal containers, or else it'd kill cde-sentinel
-			next if env != 'term' or env.nil?
-			container_with_term.push([id, name])
-		end # for c in containers
 
-		# Check for disk growth rate
-		snapshot = Vmstat.snapshot
-		disk = snapshot.disks[0]
-		block_size = disk['block_size']
-		cur_available_disk = disk['available_blocks']
-		prev_available_disk = Rails.cache.read(Constants.cache[:AVAILABLE_DISK])
-		if prev_available_disk.nil?
-			Rails.cache.write(Constants.cache[:AVAILABLE_DISK], cur_available_disk)
-			prev_available_disk = Rails.cache.read(Constants.cache[:AVAILABLE_DISK])
-		end
-		# Positive difference.
-		diff = (-1) * block_size * (cur_available_disk - prev_available_disk)
-		#If disk is growing too quickly:
-		if diff >= -(10**10)
-			for c in container_with_term
-				container_id = c[0]
-				container_name = c[1]
-				# Might need the gem rubysl-open3
-				stdout, stderr, status = Open3.capture3('docker inspect %s' % container_id)
-				container_info = JSON.parse(stdout)[0]
-				disk_size = 0
-				mount_list = container_info["Mounts"]
-				for mount in mount_list
-					if (mount["Source"])
-						stdout, stderr, status = Open3.capture3('du -sh %s' % mount["Source"])
-						mount_size = 0
-						if stdout.length != 0
-							stdout = stdout.split(" ")[0]
-							lastIndex = stdout.length - 2
-							mount_size = stdout[0..lastIndex].to_i
-							if stdout[-1] ==  "K"
-								mount_size *= (10**3)
-							elsif stdout[-1] == "M"
-								mount_size *= (10**6)
-							elsif stdout[-1] == "G"
-								mount_size *= (10**9)
-							end
-							disk_size += mount_size
-						end
-					end
-				end
-				if disk_size >= 0
-					stdout, stderr, status = Open3.capture3('docker rm -f %s' % container_id)
-					disk_size = 0
-				end
-				settings = ApplicationHelper.get_settings
-				group_name = settings["application"]["group_name"]
-				begin
-					http = Net::HTTP.new(ENV['HOST_IP_ADDR'], ENV['HOST_PORT'])
-					http.read_timeout = 5
-					http.open_timeout = 5
-					http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
-					response = http.request_get('/application/ping')
-					response.code == "200"
-					uri = '/containers/update_disk_usage'
-					req = Net::HTTP.post_form(uri,'name' => container_name, 'disk_usage' => disk_size, 'group_name' => group_name)
-				rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ECONNREFUSED
+		return if AdminUtils::Disk.growth_threshold_breached?()
 
-				end
-			end #For each term container
-		end
-		# Run du -sh to get space used
-		# Stop mis-behaving containers
+		# If disk is growing too quickly:
+        container_with_term = AdminUtils::Containers.get_term_containers()
+        for c in container_with_term
+            container_id = c[0]
+            stdout, stderr, status = Open3.capture3('docker inspect %s' % container_id)
+            container_info = JSON.parse(stdout)[0]
 
+            # Sum up the disk size in bytes of all container mount points
+            disk_size = 0
+            for mount in container_info["Mounts"]
+                disk_size += AdminUtils::Disk.du_sh_to_bytes(mount['Source'])
+            end
+            
+            # Kill the container if the size is above a certain threshold
+            if disk_size >= max_disk_size
+                stdout, stderr, status = Open3.capture3('docker kill %s' % container_id)
+            end
+
+            settings = ApplicationHelper.get_settings
+            group_name = settings["application"]["group_name"]
+            container_name = c[1]
+            res = ClusterProxy::Master.update_disk_usage(group_name, container_name, disk_size)
+            if !res.nil? and res.code == '200'
+                Rails.logger.info "Successfully updated disk usage for %s" % container_name
+            end
+        end # For each term container
 	end
 
 	# rake admin:clean_fc
