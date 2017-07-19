@@ -25,17 +25,23 @@ env :HOST_IP_ADDR, ENV['HOST_IP_ADDR']
 env :HOST_PORT, ENV['HOST_PORT']
 env :GROUP_PASSWORD, ENV['GROUP_PASSWORD']
 env :NO_HTTPS, ENV['NO_HTTPS']
+env :NAMESPACE, ENV['NAMESPACE']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
-every 5.minutes do 
+every 7.minutes do 
 	rake "admin:check_terms"
 end
 
-every 1.minute do
+every 5.minutes do
 	rake "admin:check_app"	
 end
 
 every 1.hour do
-	rake "admin:clean_fc"
+	rake "admin:clean_fs"
+end
+
+# Remove by-product of run
+every 1.day, :at => '4:30 am' do
+	command "ps -aux | grep 'tail -f /tmp/pipes/pin' | awk '{print $2}' | xargs kill -9"
 end
