@@ -1,6 +1,34 @@
 module AdminUtils
-    
+
     class Containers
+
+        def self.filter(*groups)
+            valid_exts = ['term', 'fs', 'fc']
+            set = []
+
+            keep_env = false
+            if groups.include? 'env'
+                groups.delete 'env'
+                keep_env = true
+            end
+
+            containers = Docker::Container.all
+            for c in containers
+                name = c.info['Names'][0]
+                name[0] = '' # Remove the slash
+                basename, ext = CDEDocker::Utils.container_toks(name)
+
+                if keep_env 
+                    if !ext.nil? and !valid_exts.include? ext
+                        set.push(c) if basename.length > 16
+                    end
+                else
+                    set.push(c) if groups.include? ext
+                end
+            end
+            return set
+        end
+
         def self.get_term_containers
             containers = Docker::Container.all
             container_with_term = []
