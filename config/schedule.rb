@@ -29,9 +29,11 @@ env :NAMESPACE, ENV['NAMESPACE']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
+=begin
 every 1.minute do
 	rake "admin:check_disk"
 end
+=end
 
 every 5.minutes do 
 	rake "admin:check_terms"
@@ -45,8 +47,9 @@ every 1.hour do
 	rake "admin:clean_fs"
 end
 
+every 
+
 # Remove by-product of run
 every 1.day, :at => '4:30 am' do
-	command "ps -aux | grep 'tail -f /tmp/pipes/pin' | awk '{print $2}' | xargs kill -9"
+	rake "admin:stop_containers"
 end
-
