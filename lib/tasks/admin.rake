@@ -89,12 +89,42 @@ namespace :admin do
 		sleep 1
 	end
 
+	desc "Stop containers that have not been used accessed after a certain time" 
+	task :stop_containers => :environment do 
+        one_week = 7 * 24 * 3600 
+        containers = AdminUtils::Containers.filter('env')
+        for c in containers
+			name = c.info['Names'][0]
+	
+			# Check if user has been non-idle for last hour
+			basename = CDEDocker::Utils.container_basename(name)
+			key = basename + Constants.cache[:LAST_ACCESS]
+			last_updated = Rails.cache.read(key)
+
+			now = Time.now
+			if last_updated.nil?
+			    Rails.cache.write(key, now)
+			    next
+			else
+			    if now - last_updated > one_week 
+                    Rails.logger.info "Stopping container %s..." % name
+                    CDEDocker.kill(name) 
+                    Rails.cache.delete(key)
+                    sleep 1
+                else
+                    Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
+				end
+			end
+        end
+
+	end
+
 	desc "If disk grows by a certain rate, fix that"
 	task :check_disk => :environment do 
 		max_disk_size = 10 ** 9
 		max_diff_rate = 10 ** 7 
 
-		return if AdminUtils::Disk.growth_threshold_breached?()
+		return if not AdminUtils::Disk.growth_threshold_breached?()
 
 		# If disk is growing too quickly:
         container_with_term = AdminUtils::Containers.get_term_containers()
@@ -143,7 +173,7 @@ namespace :admin do
 	
 			# Check if user has been non-idle for last hour
 			basename = CDEDocker::Utils.container_basename(name)
-			last_updated = Rails.cache.read(basename + Constants.cache[:LAST_WRITE])
+			last_updated = Rails.cache.read(basename + Constants.cache[:LAST_ACCESS])
 
 			if not last_updated.nil?
 				keep = (now - last_updated < 3600)
@@ -169,4 +199,10 @@ namespace :admin do
 			sleep 1
 		end
 	end
+
+    desc "Clean-up run debris" 
+    task :remove_tails => :environment do
+        `ps -aux | grep 'tail -f /tmp/pipes/pin' | awk '{print $2}' | xargs kill -9`
+    end
+
 end
