@@ -13,7 +13,7 @@ class Constants
 
 	def self.cache
 		return {
-			:LAST_WRITE => '-modified',
+			:LAST_ACCESS => '-modified',
 			:AVAILABLE_DISK => 'available-disk'
 		}
 	end
