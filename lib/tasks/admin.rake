@@ -17,141 +17,189 @@ namespace :admin do
 	task :check_terms => :environment do
 		Rails.logger.info "Checking CPU intensive processes in containers at %s" % Time.now.to_s
 
-		containers = Docker::Container.all
-		uniq_containers = {}
-	
-		for c in containers
-			name = c.info['Names'][0]
-			name[0] = '' # Remove the slash
-			basename, env = CDEDocker::Utils.container_toks(name)
+        m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
+        return if m.locked?
+        # Lock access to fc containers
+        m.lock
 
-			# Skip file system containers
-			next if env == 'fc' or env == 'fs' or env.nil?
+        begin
+            containers = Docker::Container.all
+            uniq_containers = {}
+        
+            for c in containers
+                name = c.info['Names'][0]
+                name[0] = '' # Remove the slash
+                basename, env = CDEDocker::Utils.container_toks(name)
 
-			# Skip node components
-			next if basename[0...ENV['NAMESPACE'].length] == ENV['NAMESPACE']
+                # Skip file system containers
+                next if env == 'fc' or env == 'fs' or env.nil?
 
-			uniq_containers[basename] = [] if uniq_containers[basename].nil?
-			uniq_containers[basename].push(env)
-		end # for c in containers
-		
-		# Get containers who have a terminal attached
-		container_with_term = []
+                # Skip node components
+                next if basename[0...ENV['NAMESPACE'].length] == ENV['NAMESPACE']
 
-		uniq_containers.each do |key, envs|
-			if key.length > 0 and envs.length > 1
-				container_with_term.push("%s-%s" % [key, (envs[0] == 'term' ? envs[1] : envs[0])])
-			end
-		end
+                uniq_containers[basename] = [] if uniq_containers[basename].nil?
+                uniq_containers[basename].push(env)
+            end # for c in containers
+            
+            # Get containers who have a terminal attached
+            container_with_term = []
 
-		for c in container_with_term
-			
-			next if not CDEDocker.check_alive(c)
+            uniq_containers.each do |key, envs|
+                if key.length > 0 and envs.length > 1
+                    container_with_term.push("%s-%s" % [key, (envs[0] == 'term' ? envs[1] : envs[0])])
+                end
+            end
 
-			# Get top 5 proccesses with highest CPU usage
-			stdout, stderr, status = CDEDocker.exec(
-				['sh', '-c', "ps -aux --sort=-pcpu | head -n 6 | awk '{if (NR != 1) {print}}'"], {:detach => false}, c)
+            for c in container_with_term
+                
+                next if not CDEDocker.check_alive(c)
 
-			rows = stdout[0].split("\n")
-			for r in rows
-				# Columns[0] => user
-				# Columns[1] => PID
-				# Columns[2] => CPU %
-				columns = r.split()
+                # Get top 5 proccesses with highest CPU usage
+                stdout, stderr, status = CDEDocker.exec(
+                    ['sh', '-c', "ps -aux --sort=-pcpu | head -n 6 | awk '{if (NR != 1) {print}}'"], {:detach => false}, c)
 
-				# If CPU usage is greater than some ammount
-				if columns[2].to_i > 30
-					stdout, stderr, status = CDEDocker.exec(
-						['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, c)
+                rows = stdout[0].split("\n")
+                for r in rows
+                    # Columns[0] => user
+                    # Columns[1] => PID
+                    # Columns[2] => CPU %
+                    columns = r.split()
 
-					if stdout[0].nil?
-						Rails.logger.debug stderr
-						next
-					end
+                    # If CPU usage is greater than some ammount
+                    if columns[2].to_i > 30
+                        stdout, stderr, status = CDEDocker.exec(
+                            ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, c)
 
-					active_time = stdout[0].split().join('').to_i
+                        if stdout[0].nil?
+                            Rails.logger.debug stderr
+                            next
+                        end
 
-					Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
+                        active_time = stdout[0].split().join('').to_i
 
-					# Give the process 3 minutes of runtime
-					if active_time > 180
-						Rails.logger.info "Killing the process..."
-						#CDEDocker.stop(c) 
-						CDEDocker.exec(['kill', '-9', columns[1]], {}, c)
-					end
+                        Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
 
-				end # if
+                        # Give the process 3 minutes of runtime
+                        if active_time > 180
+                            Rails.logger.info "Killing the process..."
+                            #CDEDocker.stop(c) 
+                            CDEDocker.exec(['kill', '-9', columns[1]], {}, c)
+                        end
 
-			end # for r in rows
+                    end # if
 
-		end # for c in container_with_term
+                end # for r in rows
 
-		sleep 1
+                sleep 1
+            end # for c in container_with_term
+        rescue => err
+            Rails.logger.error err
+        end
+        
+        m.unlock
 	end
 
 	desc "Stop containers that have not been used accessed after a certain time" 
 	task :stop_containers => :environment do 
+	    Rails.logger.info "Garbage collecting environment containers..."
         one_week = 7 * 24 * 3600 
-        containers = AdminUtils::Containers.filter('env')
-        for c in containers
-			name = c.info['Names'][0]
-	
-			# Check if user has been non-idle for last hour
-			basename = CDEDocker::Utils.container_basename(name)
-			key = basename + Constants.cache[:LAST_ACCESS]
-			last_updated = Rails.cache.read(key)
 
-			now = Time.now
-			if last_updated.nil?
-			    Rails.cache.write(key, now)
-			    next
-			else
-			    if now - last_updated > one_week 
-                    Rails.logger.info "Stopping container %s..." % name
-                    CDEDocker.kill(name) 
-                    Rails.cache.delete(key)
-                    sleep 1
+        m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
+        return if m.locked?
+        # Lock access to fc containers
+        m.lock
+
+        begin
+            containers = AdminUtils::Containers.filter('env', 'term')
+            for c in containers
+                name = c.info['Names'][0]
+        
+                # Check if user has been non-idle for last hour
+                basename = CDEDocker::Utils.container_basename(name)
+                key = basename + Constants.cache[:LAST_ACCESS]
+                last_updated = Rails.cache.read(key)
+
+                now = Time.now
+                if last_updated.nil?
+                    Rails.cache.write(key, now)
+                    next
                 else
-                    Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
-				end
-			end
+                    if now - last_updated > one_week 
+                        Rails.logger.info "Stopping container %s..." % name
+                        CDEDocker.kill(name) 
+                        Rails.cache.delete(key)
+                        sleep 1
+                    else
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
+                    end
+                end
+            end
+        rescue => err
+            Rails.logger.error err
         end
 
+        m.unlock
 	end
 
 	desc "If disk grows by a certain rate, fix that"
 	task :check_disk => :environment do 
+	    Rails.logger.info "Checking disk usage..."
+
 		max_disk_size = 10 ** 9
 		max_diff_rate = 10 ** 7 
-
-		return if not AdminUtils::Disk.growth_threshold_breached?()
-
-		# If disk is growing too quickly:
-        container_with_term = AdminUtils::Containers.get_term_containers()
-        for c in container_with_term
-            container_id = c[0]
-            stdout, stderr, status = Open3.capture3('docker inspect %s' % container_id)
-            container_info = JSON.parse(stdout)[0]
-
-            # Sum up the disk size in bytes of all container mount points
-            disk_size = 0
-            for mount in container_info["Mounts"]
-                disk_size += AdminUtils::Disk.du_sh_to_bytes(mount['Source'])
-            end
-            
-            # Kill the container if the size is above a certain threshold
-            if disk_size >= max_disk_size
-                stdout, stderr, status = Open3.capture3('docker kill %s' % container_id)
+        
+        m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
+        return if m.locked?
+        # Lock access to fc containers
+        m.lock
+        
+        begin
+            if not AdminUtils::Disk.growth_threshold_breached?()
+                Rails.logger.info "Disk looks fine."
+                now = Time.now.localtime
+                # Allow one run at 5AM otherwise block
+                return if now.hour != 5 and now.min > 5
             end
 
-            settings = ApplicationHelper.get_settings
-            group_name = settings["application"]["group_name"]
-            container_name = c[1]
-            res = ClusterProxy::Master.update_disk_usage(group_name, container_name, disk_size)
-            if !res.nil? and res.code == '200'
-                Rails.logger.info "Successfully updated disk usage for %s" % container_name
-            end
-        end # For each term container
+            # If disk is growing too quickly:
+            #container_with_term = AdminUtils::Containers.get_term_containers()
+            containers = AdminUtils::Containers.filter('fc')
+            for c in containers
+                container_name = c.info['Names'][0]
+                container_name[0] = '' # Remove first slash
+                #stdout, stderr, status = Open3.capture3('docker inspect %s' % container_name)
+                #container_info = JSON.parse(stdout)[0]
+
+                # Sum up the disk size in bytes of all container mount points
+                disk_size = 0
+                for mount in c.info['Mounts']
+                    resolved_path = Utils::Env.resolve_path(mount['Source'])
+                    disk_size += AdminUtils::Disk.du_sh_to_bytes(resolved_path)
+                end
+                
+                # Kill the container if the size is above a certain threshold
+                if disk_size >= max_disk_size
+                    Rails.logger.info "%s has breached the max disk size of %sMB" % [container_name, max_disk_size / Numeric::MEGABYTE]
+                    stdout, stderr, status = Open3.capture3('docker kill %s' % container_name)
+                else
+                    Rails.logger.info "%s has used %sMB..." % [container_name, disk_size / Numeric::MEGABYTE]
+                end
+
+                settings = ApplicationHelper.get_settings
+                group_name = settings["application"]["group_name"]
+                proxy = ClusterProxy::Master.new
+                res = proxy.update_disk_usage(group_name, container_name, disk_size)
+                if !res.nil? and res.code == '200'
+                    Rails.logger.info "Successfully updated disk usage for %s" % container_name
+                end
+
+                sleep 1
+            end # For each term container
+        rescue => err
+            Rails.logger.error err
+        end
+
+        m.unlock
 	end
 
 	# rake admin:clean_fc
