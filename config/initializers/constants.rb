@@ -6,13 +6,11 @@ class Constants
 			:MASTER_PORT => ENV['MASTER_PORT']
 		}
 	end
-	
-	def self.RESOURCE_SCAN_INTERVAL
-		return 60
-	end
 
 	def self.cache
 		return {
+		    :FC_ACCESS => 'fc.access',
+		    :ENV_ACCESS => 'env.access',
 			:LAST_ACCESS => '-modified',
 			:AVAILABLE_DISK => 'available-disk'
 		}
