@@ -2,6 +2,50 @@ require 'net/http'
 
 module Utils
 
+    class Env
+        
+        def self.resolve_path(path)
+            toks = path.split('/')
+            a = toks[-1]
+            b = toks[-2]
+            c = toks[-3]
+            x = File.dirname ENV['SELF_SYSTEM_ROOT']
+
+            return File.join(x, c, b, a)
+        end
+
+    end
+
+    class Mutex
+        
+        def initialize(key, count=1)
+            @key = key
+            @count = count
+            #Rails.cache.write(@key, 0)
+        end
+
+        def lock
+            Rails.cache.increment(@key)    
+        end
+
+        def locked?
+            count = Rails.cache.read(@key)
+            return false if count.nil?
+            return count.to_i >= @count
+        end
+
+        def unlock
+            count = Rails.cache.read(@key)
+
+            if count == 1
+                Rails.cache.delete(@key) 
+            else
+                Rails.cache.decrement(@key)
+            end
+        end
+
+    end
+
 	class Http
 
 		def self.is_uri?(url)
