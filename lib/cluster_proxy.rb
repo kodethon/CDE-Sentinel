@@ -20,7 +20,7 @@ module ClusterProxy
 			
 			return nil if ip_addr.nil? 
 
-			url = 'https://' + ip_addr 
+			url = (ENV['NODE_PROTO'] || 'https') + '://' + ip_addr 
 			url += ':' + port if !port.nil? and port.length > 0
 			url += ClusterProxy::PathFactory.get(action)
 			return url
@@ -57,7 +57,7 @@ module ClusterProxy
 			return send_post_request(url, params)
 		end
 
-		def self.update_disk_usage(group_name, container_name, disk_usage)
+		def update_disk_usage(group_name, container_name, disk_usage)
             url = get_master_endpoint('update-disk-usage')
             return nil if url.nil?
 
