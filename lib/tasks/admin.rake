@@ -248,9 +248,4 @@ namespace :admin do
 		end
 	end
 
-    desc "Clean-up run debris" 
-    task :remove_tails => :environment do
-        `ps -aux | grep 'tail -f /tmp/pipes/pin' | awk '{print $2}' | xargs kill -9`
-    end
-
 end
