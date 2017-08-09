@@ -47,9 +47,7 @@ every 1.hour do
 	rake "admin:clean_fs"
 end
 
-every 
-
 # Remove by-product of run
-every 1.day, :at => '4:30 am' do
+every :day, :at => '4:30 am' do
 	rake "admin:stop_containers"
 end
