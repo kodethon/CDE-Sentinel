@@ -29,25 +29,29 @@ env :NAMESPACE, ENV['NAMESPACE']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
+# Send a heart beat to master component
+every 5.minutes do
+	rake "admin:check_app"	
+end
+
 =begin
+# Check active containers for proper disk usage
 every 1.minute do
 	rake "admin:check_disk"
 end
 =end
 
-every 5.minutes do 
-	rake "admin:check_terms"
+# Check active containers for proper CPU usage
+every 7.minutes do 
+	rake "admin:monitor_cpu_usage"
 end
 
-every 5.minutes do
-	rake "admin:check_app"	
-end
-
+# Disable file sync for idle containers
 every 1.hour do
 	rake "admin:clean_fs"
 end
 
-# Remove by-product of run
+# Stop containers that have been idle for a long time
 every :day, :at => '4:30 am' do
 	rake "admin:stop_containers"
 end
