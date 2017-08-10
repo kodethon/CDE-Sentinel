@@ -13,9 +13,9 @@ namespace :admin do
 		end
 	end
 
-	desc "Check CPU intensive processes in containers with terminal attached"
-	task :check_terms => :environment do
-		Rails.logger.info "Checking CPU intensive processes in containers at %s" % Time.now.to_s
+	desc "Monitor CPU intensive processes in active containers"
+	task :monitor_cpu_usage => :environment do
+		Rails.logger.info "Checking CPU intensive processes in containers..." 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         return if m.locked?
@@ -23,35 +23,8 @@ namespace :admin do
         m.lock
 
         begin
-            containers = Docker::Container.all
-            uniq_containers = {}
-        
+            containers = AdminUtils::Containers.filter('fc')
             for c in containers
-                name = c.info['Names'][0]
-                name[0] = '' # Remove the slash
-                basename, env = CDEDocker::Utils.container_toks(name)
-
-                # Skip file system containers
-                next if env == 'fc' or env == 'fs' or env.nil?
-
-                # Skip node components
-                next if basename[0...ENV['NAMESPACE'].length] == ENV['NAMESPACE']
-
-                uniq_containers[basename] = [] if uniq_containers[basename].nil?
-                uniq_containers[basename].push(env)
-            end # for c in containers
-            
-            # Get containers who have a terminal attached
-            container_with_term = []
-
-            uniq_containers.each do |key, envs|
-                if key.length > 0 and envs.length > 1
-                    container_with_term.push("%s-%s" % [key, (envs[0] == 'term' ? envs[1] : envs[0])])
-                end
-            end
-
-            for c in container_with_term
-                
                 next if not CDEDocker.check_alive(c)
 
                 # Get top 5 proccesses with highest CPU usage
