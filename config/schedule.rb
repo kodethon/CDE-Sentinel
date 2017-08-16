@@ -29,6 +29,9 @@ env :NAMESPACE, ENV['NAMESPACE']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
+is_slave = ENV['APP_TYPE'] == 'slave'
+is_fs = ENV['APP_TYPE'] == 'fs'
+
 # Send a heart beat to master component
 every 5.minutes do
 	rake "admin:check_app"	
@@ -36,8 +39,10 @@ end
 
 =begin
 # Check active containers for proper disk usage
-every 1.minute do
-	rake "admin:check_disk"
+if is_slave
+    every 1.minute do
+        rake "admin:check_disk"
+    end
 end
 =end
 
@@ -47,8 +52,10 @@ every 7.minutes do
 end
 
 # Disable file sync for idle containers
-every 1.hour do
-	rake "admin:clean_fs"
+if is_slave or is_fs 
+    every 1.hour do
+        rake "admin:clean_fs"
+    end
 end
 
 # Stop containers that have been idle for a long time
