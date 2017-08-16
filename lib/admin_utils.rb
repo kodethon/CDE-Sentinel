@@ -1,6 +1,40 @@
+require 'open3'
+
 module AdminUtils
 
     class Containers
+
+    	def self.kill_all(key)
+			matches = self.match_key(key)	
+			for container_name in matches
+				Rails.logger.info "Killing %s..." % container_name
+				CDEDocker.kill(container_name)
+			end
+    	end
+
+        def self.match_key(key)
+            key = key.split(' ')[0]
+            stdout, stderr, status = Open3.capture3("docker ps | grep %s | awk '{print $1}'" % key)
+            return [] if not status.exitstatus == 0
+            return stdout.split("\n")
+        end
+
+        def self.generate_table(containers = nil)
+            containers =  containers = Docker::Container.all if containers.nil?
+            
+            table = {}
+            for c in containers
+                name = c.info['Names'][0]
+                basename = CDEDocker::Utils.container_basename(name)
+                if table[basename].nil?
+                    table[basename] = [name]
+                else
+                    table[basename].push(name)
+                end
+            end
+
+            return table
+        end
 
         def self.filter(*groups)
             valid_exts = ['term', 'fs', 'fc']
