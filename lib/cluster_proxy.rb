@@ -63,7 +63,7 @@ module ClusterProxy
 
             return send_post_request(url, {
                :group_name => group_name,
-               :container_name => container_name,
+               :name => container_name,
                :disk_usage => disk_usage
             })
 		end
