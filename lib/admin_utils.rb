@@ -4,8 +4,7 @@ module AdminUtils
 
     class Containers
 
-    	def self.kill_all(key)
-			matches = self.match_key(key)	
+    	def self.kill_all(matches)
 			for container_name in matches
 				Rails.logger.info "Killing %s..." % container_name
 				CDEDocker.kill(container_name)
@@ -25,6 +24,7 @@ module AdminUtils
             table = {}
             for c in containers
                 name = c.info['Names'][0]
+                name[0] = '' 
                 basename = CDEDocker::Utils.container_basename(name)
                 if table[basename].nil?
                     table[basename] = [name]
@@ -34,6 +34,30 @@ module AdminUtils
             end
 
             return table
+        end
+
+        def self.filter_names(container_names, *groups)
+            valid_exts = ['term', 'fs', 'fc']
+            set = []
+
+            keep_env = false
+            if groups.include? 'env'
+                groups.delete 'env'
+                keep_env = true
+            end
+
+            for name in container_names
+                basename, ext = CDEDocker::Utils.container_toks(name)
+
+                if keep_env 
+                    if !ext.nil? and !valid_exts.include? ext
+                        set.push(name) if basename.length > 16 # Env containers have longer basenames
+                    end
+                else
+                    set.push(name) if groups.include? ext
+                end
+            end
+            return set
         end
 
         def self.filter(*groups)

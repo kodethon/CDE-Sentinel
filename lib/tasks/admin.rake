@@ -28,42 +28,46 @@ namespace :admin do
             for c in containers
                 name = c.info['Names'][0]
                 next if not CDEDocker.check_alive(name)
+                basename = CDEDocker::Utils.container_basename(name)
+                
+                set = AdminUtils::Containers.filter_names(container_table[basename], 'env')
+                for name in set
+                    # Get top 5 proccesses with highest CPU usage
+                    stdout, stderr, status = CDEDocker.exec(
+                        ['sh', '-c', "ps -aux --sort=-pcpu | head -n 6 | awk '{if (NR != 1) {print}}'"], {:detach => false}, name)
 
-                # Get top 5 proccesses with highest CPU usage
-                stdout, stderr, status = CDEDocker.exec(
-                    ['sh', '-c', "ps -aux --sort=-pcpu | head -n 6 | awk '{if (NR != 1) {print}}'"], {:detach => false}, name)
+                    rows = stdout[0].split("\n")
+                    for r in rows
+                        # Columns[0] => user
+                        # Columns[1] => PID
+                        # Columns[2] => CPU %
+                        columns = r.split()
 
-                rows = stdout[0].split("\n")
-                for r in rows
-                    # Columns[0] => user
-                    # Columns[1] => PID
-                    # Columns[2] => CPU %
-                    columns = r.split()
+                        # If CPU usage is greater than some ammount
+                        if columns[2].to_i > 30
+                            stdout, stderr, status = CDEDocker.exec(
+                                ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, name)
 
-                    # If CPU usage is greater than some ammount
-                    if columns[2].to_i > 30
-                        stdout, stderr, status = CDEDocker.exec(
-                            ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, name)
+                            if stdout[0].nil?
+                                Rails.logger.debug stderr
+                                next
+                            end
 
-                        if stdout[0].nil?
-                            Rails.logger.debug stderr
-                            next
-                        end
+                            active_time = stdout[0].split().join('').to_i
 
-                        active_time = stdout[0].split().join('').to_i
+                            Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
 
-                        Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
+                            # Give the process 3 minutes of runtime
+                            if active_time > 180
+                                Rails.logger.info "Killing the process..."
+                                #CDEDocker.stop(c) 
+                                CDEDocker.exec(['kill', '-9', columns[1]], {}, name)
+                            end
 
-                        # Give the process 3 minutes of runtime
-                        if active_time > 180
-                            Rails.logger.info "Killing the process..."
-                            #CDEDocker.stop(c) 
-                            CDEDocker.exec(['kill', '-9', columns[1]], {}, name)
-                        end
+                        end # if
 
-                    end # if
-
-                end # for r in rows
+                    end # for r in rows
+                end # for s in set
 
                 sleep 1
             end # for c in container_with_term
@@ -154,7 +158,8 @@ namespace :admin do
                 if disk_size >= max_disk_size
                     Rails.logger.info "%s has breached the max disk size of %sMB" % [basename, max_disk_size / Numeric::MEGABYTE]
                     #stdout, stderr, status = Open3.capture3('docker kill %s' % container_name)
-                    AdminUtils::Containers.kill_all(basename)
+                    matches = AdminUtils::Containers.match_key(basename)
+                    AdminUtils::Containers.kill_all(matches)
                 else
                     Rails.logger.info "%s has used %sMB..." % [basename, disk_size / Numeric::MEGABYTE]
                 end

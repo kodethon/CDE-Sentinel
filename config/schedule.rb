@@ -37,14 +37,12 @@ every 5.minutes do
 	rake "admin:check_app"	
 end
 
-=begin
 # Check active containers for proper disk usage
 if is_slave
-    every 1.minute do
+    every 6.minutes do
         rake "admin:check_disk"
     end
 end
-=end
 
 # Check active containers for proper CPU usage
 every 7.minutes do 
