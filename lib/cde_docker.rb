@@ -71,8 +71,9 @@ module CDEDocker
 	end
 
 	def self.remove(container_name)
-		killed = self.kill(container_name)
-		return false if not killed
+		container = self.get_container(container_name)
+		return false if container.nil?
+		container.kill
 		container.delete
 		return true
 	end
