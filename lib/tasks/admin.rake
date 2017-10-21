@@ -165,7 +165,7 @@ namespace :admin do
         m.unlock
 	end
 
-	# rake admin:clean_fc
+	# rake admin:clean_fs
 	desc "Garbage collect fs containers"
 	task :clean_fs => :environment do
 		Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s

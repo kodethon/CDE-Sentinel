@@ -38,8 +38,10 @@ every 5.minutes do
 end
 
 # Check active containers for proper CPU usage
-every 7.minutes do 
-	rake "admin:monitor_cpu_usage"
+if is_slave
+    every 7.minutes do 
+        rake "admin:monitor_cpu_usage"
+    end
 end
 
 # Disable file sync for idle containers
