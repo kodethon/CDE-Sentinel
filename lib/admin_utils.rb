@@ -70,7 +70,7 @@ module AdminUtils
                 keep_env = true
             end
 
-            Docker::Container.all(all: true, filters: {status: ['exited']}.to_json)
+            containers = Docker::Container.all(all: true, filters: {status: ['exited']}.to_json)
             for c in containers
                 name = c.info['Names'][0]
                 name[0] = '' # Remove the slash

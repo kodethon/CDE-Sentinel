@@ -111,7 +111,7 @@ namespace :admin do
                         Rails.cache.delete(key)
                         sleep 1
                     else
-                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + four_hours]
                     end
                 end
             end
@@ -122,10 +122,10 @@ namespace :admin do
         m.unlock
 	end
 
-	desc "Remove containers that have not been used accessed after 4 weeks" 
+	desc "Remove containers that have not been used accessed after 2 weeks" 
 	task :remove_containers => :environment do 
 	    Rails.logger.info "Removing environment containers..."
-        one_week = 4 * 7 * 24 * 3600 
+        two_weeks = 2 * 7 * 24 * 3600 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         next if m.locked?
@@ -147,14 +147,14 @@ namespace :admin do
                     Rails.cache.write(key, now)
                     next
                 else
-                    if now - last_updated > one_week 
+                    if now - last_updated > two_weeks 
                         Rails.logger.info "Removing container %s..." % name
                         CDEDocker.remove(name) 
 
                         Rails.cache.delete(key)
                         sleep 1
                     else
-                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + two_weeks]
                     end
                 end
             end
