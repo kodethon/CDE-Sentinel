@@ -37,13 +37,6 @@ every 5.minutes do
 	rake "admin:check_app"	
 end
 
-# Check active containers for proper disk usage
-if is_slave
-    every 6.minutes do
-        rake "admin:check_disk"
-    end
-end
-
 # Check active containers for proper CPU usage
 every 7.minutes do 
 	rake "admin:monitor_cpu_usage"
@@ -60,3 +53,17 @@ end
 every :day, :at => '4:30 am' do
 	rake "admin:stop_containers"
 end
+
+# Remove containers that have been idle for a long time
+every :day, :at => '5:30 am' do
+	rake "admin:remove_containers"
+end
+
+=begin
+# Check active containers for proper disk usage
+if is_slave
+    every 6.minutes do
+        rake "admin:check_disk"
+    end
+end
+=end

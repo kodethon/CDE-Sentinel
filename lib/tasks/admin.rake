@@ -1,5 +1,6 @@
 require 'open3'
 require "net/http"
+
 namespace :admin do
 	
 	desc "Check if main app is running"
@@ -81,11 +82,11 @@ namespace :admin do
 	desc "Stop containers that have not been used accessed after a certain time" 
 	task :stop_containers => :environment do 
 	    Rails.logger.info "Garbage collecting environment containers..."
-        one_week = 7 * 24 * 3600 
+        four_hours = 4 * 3600 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         next if m.locked?
-        # Lock access to fc containers
+        # Lock access to environment containers
         m.lock
 
         begin
@@ -103,9 +104,10 @@ namespace :admin do
                     Rails.cache.write(key, now)
                     next
                 else
-                    if now - last_updated > one_week 
+                    if now - last_updated > four_hours
                         Rails.logger.info "Stopping container %s..." % name
                         CDEDocker.kill(name) 
+
                         Rails.cache.delete(key)
                         sleep 1
                     else
@@ -118,6 +120,92 @@ namespace :admin do
         end
 
         m.unlock
+	end
+
+	desc "Remove containers that have not been used accessed after 4 weeks" 
+	task :remove_containers => :environment do 
+	    Rails.logger.info "Removing environment containers..."
+        one_week = 4 * 7 * 24 * 3600 
+
+        m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
+        next if m.locked?
+        # Lock access to environment containers
+        m.lock
+
+        begin
+            containers = AdminUtils::Containers.filter_exited('env', 'term')
+            for c in containers
+                name = c.info['Names'][0]
+        
+                # Check if user has been non-idle for last hour
+                basename = CDEDocker::Utils.container_basename(name)
+                key = basename + Constants.cache[:LAST_ACCESS]
+                last_updated = Rails.cache.read(key)
+
+                now = Time.now
+                if last_updated.nil?
+                    Rails.cache.write(key, now)
+                    next
+                else
+                    if now - last_updated > one_week 
+                        Rails.logger.info "Removing container %s..." % name
+                        CDEDocker.remove(name) 
+
+                        Rails.cache.delete(key)
+                        sleep 1
+                    else
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + one_week]
+                    end
+                end
+            end
+        rescue => err
+            Rails.logger.error err
+        end
+
+        m.unlock
+	end
+
+	# rake admin:clean_fc
+	desc "Garbage collect fs containers"
+	task :clean_fs => :environment do
+		Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
+
+		now = Time.now
+        containers = AdminUtils::Containers.filter('fc', 'fs')
+		for c in containers
+			name = c.info['Names'][0]
+
+			# Check if user has been non-idle for last hour
+			basename = CDEDocker::Utils.container_basename(name)
+			key = basename + Constants.cache[:LAST_ACCESS]
+			last_updated = Rails.cache.read(key)
+
+			keep = false
+			if last_updated.nil?
+				Rails.cache.write(key, now)
+			else
+				keep = (now - last_updated < 3600)
+				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 3600]
+			end
+			
+			# File system servers have a week to live
+			keep = true if CDEDocker::Utils.container_env(name) == 'fs'
+			if keep
+				# Check if container has been started this week
+				container = Docker::Container.get(c.id)
+				started_at = container.info['State']['StartedAt']
+				timestamp = DateTime.rfc3339(started_at)
+				keep = false if Time.now - timestamp > 604800
+				Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
+			end
+
+			if not keep
+				puts "Stopping container %s..." % name
+				CDEDocker.kill(name) 
+			end
+
+			sleep 1
+		end
 	end
 
 	desc "If disk grows by a certain rate, fix that"
@@ -179,49 +267,6 @@ namespace :admin do
         end
 
         m.unlock
-	end
-
-	# rake admin:clean_fc
-	desc "Garbage collect fs containers"
-	task :clean_fs => :environment do
-		Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
-
-		now = Time.now
-        containers = AdminUtils::Containers.filter('fc', 'fs')
-		for c in containers
-			name = c.info['Names'][0]
-
-			# Check if user has been non-idle for last hour
-			basename = CDEDocker::Utils.container_basename(name)
-			key = basename + Constants.cache[:LAST_ACCESS]
-			last_updated = Rails.cache.read(key)
-
-			keep = false
-			if last_updated.nil?
-				Rails.cache.write(key, now)
-			else
-				keep = (now - last_updated < 3600)
-				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 3600]
-			end
-			
-			# File system servers have a week to live
-			keep = true if CDEDocker::Utils.container_env(name) == 'fs'
-			if keep
-				# Check if container has been started this week
-				container = Docker::Container.get(c.id)
-				started_at = container.info['State']['StartedAt']
-				timestamp = DateTime.rfc3339(started_at)
-				keep = false if Time.now - timestamp > 604800
-				Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
-			end
-
-			if not keep
-				puts "Stopping container %s..." % name
-				CDEDocker.kill(name) 
-			end
-
-			sleep 1
-		end
 	end
 
 end
