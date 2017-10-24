@@ -91,7 +91,9 @@ namespace :admin do
 
         begin
             containers = AdminUtils::Containers.filter('env', 'term')
+            stopped = 0
             for c in containers
+                break if stopped > 1
                 name = c.info['Names'][0]
         
                 # Check if user has been non-idle for last hour
@@ -109,11 +111,13 @@ namespace :admin do
                         CDEDocker.kill(name) 
 
                         Rails.cache.delete(key)
-                        sleep 1
+                        stopped += 1 # Update number of stopped containers
                     else
                         Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + four_hours]
                     end
                 end
+
+                sleep 0.25
             end
         rescue => err
             Rails.logger.error err
@@ -172,7 +176,9 @@ namespace :admin do
 
 		now = Time.now
         containers = AdminUtils::Containers.filter('fc', 'fs')
+        stopped = 0
 		for c in containers
+		    break if stopped > 1
 			name = c.info['Names'][0]
 
 			# Check if user has been non-idle for last hour
@@ -202,9 +208,10 @@ namespace :admin do
 			if not keep
 				puts "Stopping container %s..." % name
 				CDEDocker.kill(name) 
+				stopped += 1 # Update number of stopped containers
 			end
 
-			sleep 1
+			sleep 0.25
 		end
 	end
 
