@@ -45,7 +45,7 @@ namespace :admin do
                         columns = r.split()
 
                         # If CPU usage is greater than some ammount
-                        if columns[2].to_i > 30
+                        if columns[2].to_i > 15
                             stdout, stderr, status = CDEDocker.exec(
                                 ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, name)
 
@@ -79,10 +79,10 @@ namespace :admin do
         m.unlock
 	end
 
-	desc "Stop containers that have not been used accessed after a certain time" 
+	desc "Stop containers that have not been used accessed after 3 hours" 
 	task :stop_containers => :environment do 
 	    Rails.logger.info "Garbage collecting environment containers..."
-        four_hours = 4 * 3600 
+        three_hours = 3 * 3600 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         next if m.locked?
@@ -106,14 +106,14 @@ namespace :admin do
                     Rails.cache.write(key, now)
                     next
                 else
-                    if now - last_updated > four_hours
+                    if now - last_updated > three_hours
                         Rails.logger.info "Stopping container %s..." % name
                         CDEDocker.kill(name) 
 
                         Rails.cache.delete(key)
                         stopped += 1 # Update number of stopped containers
                     else
-                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + four_hours]
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + three_hours]
                     end
                 end
 
@@ -126,7 +126,7 @@ namespace :admin do
         m.unlock
 	end
 
-	desc "Remove containers that have not been used accessed after 2 weeks" 
+	desc "Remove containers that have not been accessed after 2 weeks" 
 	task :remove_containers => :environment do 
 	    Rails.logger.info "Removing environment containers..."
         two_weeks = 2 * 7 * 24 * 3600 
@@ -169,6 +169,28 @@ namespace :admin do
         m.unlock
 	end
 
+	desc "Revive fs containers"
+	task :start_fs => :environment do
+		Rails.logger.debug "Starting fs containers at %s" % Time.now.to_s
+
+        containers = AdminUtils::Containers.filter_exited('fc', 'fs')
+        for c in containers
+			name = c.info['Names'][0]
+
+        	basename = CDEDocker::Utils.container_basename(name)
+			key = basename + Constants.cache[:LAST_ACCESS]
+			last_updated = Rails.cache.read(key)
+			next if last_updated.nil?
+
+			if Time.now - last_updated  < 600
+			    puts "Starting containers %s..." % name
+                CDEDocker.start(name) 
+			end
+
+			sleep 0.25
+        end
+	end
+
 	# rake admin:clean_fs
 	desc "Garbage collect fs containers"
 	task :clean_fs => :environment do
@@ -176,9 +198,11 @@ namespace :admin do
 
 		now = Time.now
         containers = AdminUtils::Containers.filter('fc', 'fs')
+
+        max = containers.length / 3 + 1
         stopped = 0
 		for c in containers
-		    break if stopped > 1
+		    break if stopped > max
 			name = c.info['Names'][0]
 
 			# Check if user has been non-idle for last hour
@@ -190,18 +214,18 @@ namespace :admin do
 			if last_updated.nil?
 				Rails.cache.write(key, now)
 			else
-				keep = (now - last_updated < 3600)
-				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 3600]
+				keep = (now - last_updated < 120)
+				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 120]
 			end
 			
-			# File system servers have a week to live
+			# File system servers have a day to live
 			keep = true if CDEDocker::Utils.container_env(name) == 'fs'
 			if keep
-				# Check if container has been started this week
+				# Check if container has been started this day
 				container = Docker::Container.get(c.id)
 				started_at = container.info['State']['StartedAt']
 				timestamp = DateTime.rfc3339(started_at)
-				keep = false if Time.now - timestamp > 604800
+				keep = false if Time.now - timestamp > 86400
 				Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
 			end
 
@@ -211,7 +235,7 @@ namespace :admin do
 				stopped += 1 # Update number of stopped containers
 			end
 
-			sleep 0.25
+			sleep 1
 		end
 	end
 

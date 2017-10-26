@@ -37,23 +37,27 @@ every 5.minutes do
 	rake "admin:check_app"	
 end
 
-# Stop containers that have been idle for a long time
-every 6.minutes do
-	rake "admin:stop_containers"
+# Check active containers for proper CPU usage
+if is_slave
+    every 6.minutes do 
+        rake "admin:monitor_cpu_usage"
+    end
 end
 
-# Disable file sync for idle containers
 if is_slave or is_fs 
     every 7.minutes do
+        rake "admin:start_fs"
+    end
+
+    # Disable file sync for idle containers
+    every 10.minutes do
         rake "admin:clean_fs"
     end
 end
 
-# Check active containers for proper CPU usage
-if is_slave
-    every 8.minutes do 
-        rake "admin:monitor_cpu_usage"
-    end
+# Stop containers that have been idle for a long time
+every 30.minutes do
+	rake "admin:stop_containers"
 end
 
 # Remove containers that have been idle for a long time
