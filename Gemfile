@@ -28,6 +28,8 @@ gem 'puma'
 gem 'dalli'
 gem 'connection_pool' # required by dalli for multithreaded server
 
+gem 'tzinfo-data'
+
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'
 
