@@ -26,6 +26,8 @@ env :HOST_PORT, ENV['HOST_PORT']
 env :GROUP_PASSWORD, ENV['GROUP_PASSWORD']
 env :NO_HTTPS, ENV['NO_HTTPS']
 env :NAMESPACE, ENV['NAMESPACE']
+env :MEMCACHE_PORT_11211_TCP_ADDR, ENV['MEMCACHE_PORT_11211_TCP_ADDR']
+env :MEMCACHE_PORT_11211_TCP_PORT, ENV['MEMCACHE_PORT_11211_TCP_PORT']
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
@@ -56,12 +58,12 @@ if is_slave or is_fs
 end
 
 # Stop containers that have been idle for a long time
-every 30.minutes do
+every 17.minutes do
 	rake "admin:stop_containers"
 end
 
 # Remove containers that have been idle for a long time
-every :day, :at => '5:30 am' do
+every :day, :at => '4:30 am' do
 	rake "admin:remove_containers"
 end
 
