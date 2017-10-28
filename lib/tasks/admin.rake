@@ -110,7 +110,7 @@ namespace :admin do
                         Rails.logger.info "Stopping container %s..." % name
                         CDEDocker.kill(name) 
 
-                        Rails.cache.delete(key)
+                        #Rails.cache.delete(key)
                         stopped += 1 # Update number of stopped containers
                     else
                         Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + three_hours]
@@ -155,7 +155,7 @@ namespace :admin do
                         Rails.logger.info "Removing container %s..." % name
                         CDEDocker.remove(name) 
 
-                        Rails.cache.delete(key)
+                        #Rails.cache.delete(key)
                         sleep 1
                     else
                         Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + two_weeks]
