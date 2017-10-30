@@ -183,7 +183,7 @@ namespace :admin do
 			next if last_updated.nil?
 
 			if Time.now - last_updated  < 600
-			    puts "Starting containers %s..." % name
+			    Rails.logger.debug "Starting containers %s..." % name
                 CDEDocker.start(name) 
 			end
 
@@ -230,7 +230,7 @@ namespace :admin do
 			end
 
 			if not keep
-				puts "Stopping container %s..." % name
+				Rails.logger.debug "Stopping container %s..." % name
 				CDEDocker.kill(name) 
 				stopped += 1 # Update number of stopped containers
 			end
