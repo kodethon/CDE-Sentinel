@@ -74,9 +74,9 @@ namespace :admin do
             end # for c in container_with_term
         rescue => err
             Rails.logger.error err
+        ensure
+            m.unlock
         end
-        
-        m.unlock
 	end
 
 	desc "Stop containers that have not been used accessed after 3 hours" 
@@ -121,9 +121,9 @@ namespace :admin do
             end
         rescue => err
             Rails.logger.error err
+        ensure
+            m.unlock
         end
-
-        m.unlock
 	end
 
 	desc "Remove containers that have not been accessed after 2 weeks" 
@@ -164,9 +164,9 @@ namespace :admin do
             end
         rescue => err
             Rails.logger.error err
+        ensure
+            m.unlock
         end
-
-        m.unlock
 	end
 
 	desc "Revive fs containers"
@@ -295,9 +295,9 @@ namespace :admin do
             end # For each term container
         rescue => err
             Rails.logger.error err
+        ensure
+            m.unlock
         end
-
-        m.unlock
 	end
 
 end
