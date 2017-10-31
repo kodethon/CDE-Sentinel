@@ -56,18 +56,11 @@ if is_slave or is_fs
     every 10.minutes do
         rake "admin:clean_fs"
     end
-
-    # Stop containers that have been idle for a long time
-    every 17.minutes do
-        rake "admin:stop_containers"
-    end
 end
 
-if is_proxy
-    # Stop containers that have been idle for a long time
-    every 17.minutes do
-        rake "admin:stop_proxy_containers"
-    end
+# Stop containers that have been idle for a long time
+every 17.minutes do
+    rake "admin:stop_containers"
 end
 
 # Remove containers that have been idle for a long time

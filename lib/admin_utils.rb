@@ -37,7 +37,7 @@ module AdminUtils
         end
 
         def self.filter_names(container_names, *groups)
-            valid_exts = ['term', 'fs', 'fc', 'terminal', 'environ']
+            valid_exts = ['term', 'fs', 'fc']
             set = []
 
             keep_env = false
@@ -61,7 +61,7 @@ module AdminUtils
         end
 
         def self.filter_exited(*groups)
-            valid_exts = ['term', 'fs', 'fc', 'terminal', 'environ']
+            valid_exts = ['term', 'fs', 'fc']
             set = []
 
             keep_env = false
