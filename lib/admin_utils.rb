@@ -105,7 +105,9 @@ module AdminUtils
 
                 if keep_env 
                     if !ext.nil? and !valid_exts.include? ext
-                        set.push(c) if basename.length > 16
+                        set.push(c) if basename.length > 16 # basename check tries to filter out non env containers
+                    else
+                    	set.push(c) if groups.include? ext
                     end
                 else
                     set.push(c) if groups.include? ext
