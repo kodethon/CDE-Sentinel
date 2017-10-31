@@ -33,6 +33,7 @@ set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log
 
 is_slave = ENV['APP_TYPE'] == 'slave'
 is_fs = ENV['APP_TYPE'] == 'fs'
+is_proxy = ENV['APP_TYPE'] == 'proxy'
 
 # Send a heart beat to master component
 every 5.minutes do
@@ -55,11 +56,18 @@ if is_slave or is_fs
     every 10.minutes do
         rake "admin:clean_fs"
     end
+
+    # Stop containers that have been idle for a long time
+    every 17.minutes do
+        rake "admin:stop_containers"
+    end
 end
 
-# Stop containers that have been idle for a long time
-every 17.minutes do
-	rake "admin:stop_containers"
+if is_proxy
+    # Stop containers that have been idle for a long time
+    every 17.minutes do
+        rake "admin:stop_proxy_containers"
+    end
 end
 
 # Remove containers that have been idle for a long time

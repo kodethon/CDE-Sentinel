@@ -169,6 +169,53 @@ namespace :admin do
         m.unlock
 	end
 
+	desc "Stop containers that have not been used accessed after 3 hours" 
+	task :stop_proxy_containers => :environment do 
+	    Rails.logger.info "Garbage collecting environment containers..."
+        six_hours = 6 * 3600 
+
+        m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
+        next if m.locked?
+        # Lock access to environment containers
+        m.lock
+
+        begin
+            containers = AdminUtils::Containers.filter('environ', 'terminal')
+            stopped = 0
+            for c in containers
+                break if stopped > 1
+                name = c.info['Names'][0]
+        
+                # Check if user has been non-idle for last hour
+                basename = CDEDocker::Utils.container_basename(name)
+                key = basename + Constants.cache[:LAST_ACCESS]
+                last_updated = Rails.cache.read(key)
+
+                now = Time.now
+                if last_updated.nil?
+                    Rails.cache.write(key, now)
+                    next
+                else
+                    if now - last_updated > six_hours
+                        Rails.logger.info "Stopping container %s..." % name
+                        CDEDocker.kill(name) 
+
+                        #Rails.cache.delete(key)
+                        stopped += 1 # Update number of stopped containers
+                    else
+                        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + six_hours]
+                    end
+                end
+
+                sleep 0.25
+            end
+        rescue => err
+            Rails.logger.error err
+        end
+
+        m.unlock
+	end
+
 	desc "Revive fs containers"
 	task :start_fs => :environment do
 		Rails.logger.debug "Starting fs containers at %s" % Time.now.to_s
