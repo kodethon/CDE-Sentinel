@@ -2,6 +2,8 @@
 
 This is a set of tasks that checks the state and health of the nodes and file system clients.
 
+There is one sentinel per slave server that checks the status of the cde-node servers and the file system clients.
+
 == Development
 
 When you start a development cluster using **start-cluster-dev.sh**, it also starts a sentinel container.
