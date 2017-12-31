@@ -6,7 +6,8 @@ module ClusterProxy
 			return {
 				'update-node' => '/application/update_node',
 				'announce' => '/application/acknowledge',
-				'update-disk-usage' => '/containers/update_disk_usage'
+				'update-disk-usage' => '/containers/update_disk_usage',
+				'update-server' => '/servers/update'
 			}[action]
 		end
 
@@ -50,6 +51,7 @@ module ClusterProxy
 			return send_post_request(url, data)
 		end
 
+
 		def announce(params)
 			url = get_master_endpoint('announce')
 			return nil if url.nil?
@@ -68,6 +70,10 @@ module ClusterProxy
             })
 		end
 
-	end
+    # Provide the Master with update information.
+    def update_server
+    end
+
+  end
 
 end
