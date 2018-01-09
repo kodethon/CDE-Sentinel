@@ -85,6 +85,24 @@ module Utils
 			return res
 		end
 
+    def self.send_put_request(route, params)
+			url = URI.parse(route)
+  
+      # Http object.
+			http = Net::HTTP.new(url.host, url.port)
+			http.read_timeout = 15 # seconds
+			http.open_timeout = 5
+			#http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
+			http.use_ssl = (url.scheme == 'https')
+	  
+      # Request object.	
+      request = Net::HTTP::Put.new(url.path)	
+      request.body = URI.encode_www_form(params)
+
+			http.request(request)
+		end
+
+
 	end
 
 end
