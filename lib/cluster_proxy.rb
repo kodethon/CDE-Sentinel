@@ -6,8 +6,7 @@ module ClusterProxy
 			return {
 				'update-node' => '/application/update_node',
 				'announce' => '/application/acknowledge',
-				'update-disk-usage' => '/containers/update_disk_usage',
-				'update-server' => '/servers/update'
+				'update-disk-usage' => '/containers/update_disk_usage'
 			}[action]
 		end
 
@@ -69,10 +68,6 @@ module ClusterProxy
                :disk_usage => disk_usage
             })
 		end
-
-    # Provide the Master with update information.
-    def update_server
-    end
 
   end
 
