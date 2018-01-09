@@ -7,9 +7,10 @@ namespace :admin do
 	task :check_app => :environment do
 		Rails.logger.info "Checking %s:%s" % [ENV['HOST_IP_ADDR'], ENV['HOST_PORT']]
 		responding = ApplicationHelper.up? ENV['HOST_IP_ADDR'], ENV['HOST_PORT']		
-		
+
 		if responding
-			res = ApplicationHelper.emit_to_master 
+			#res = ApplicationHelper.emit_to_master 
+			res = MasterServer.update_slave_server
 			Rails.logger.info "Successfully updated master!" if res.code == '200'
 		end
 	end
