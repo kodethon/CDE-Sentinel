@@ -50,6 +50,7 @@ module ClusterProxy
 			return send_post_request(url, data)
 		end
 
+
 		def announce(params)
 			url = get_master_endpoint('announce')
 			return nil if url.nil?
@@ -68,6 +69,6 @@ module ClusterProxy
             })
 		end
 
-	end
+  end
 
 end

@@ -1,28 +1,13 @@
-== README
+== Sentinel
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This is a set of tasks that checks the state and health of the nodes and file system clients.
 
-Things you may want to cover:
+There is one sentinel per slave server that checks the status of the cde-node servers and the file system clients.
 
-* Ruby version
+== Development
 
-* System dependencies
+When you start a development cluster using **start-cluster-dev.sh**, it also starts a sentinel container.
 
-* Configuration
+You can attack to the sentinel container to run some of the commands.
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
+For example, you can run `rake admin:check_app`.  But you must set `export NO_HTTPS=true`.
