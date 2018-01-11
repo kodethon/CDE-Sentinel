@@ -25,7 +25,7 @@ namespace :admin do
 
         begin
             container_table = AdminUtils::Containers.generate_table()
-            containers = AdminUtils::Containers.filter('fc')
+            containers = AdminUtils::Containers.filter('term')
             for c in containers
                 name = c.info['Names'][0]
                 next if not CDEDocker.check_alive(name)
