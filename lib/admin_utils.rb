@@ -4,12 +4,12 @@ module AdminUtils
 
     class Containers
 
-    	def self.kill_all(matches)
-			for container_name in matches
-				Rails.logger.info "Killing %s..." % container_name
-				CDEDocker.kill(container_name)
-			end
-    	end
+      def self.kill_all(matches)
+      for container_name in matches
+        Rails.logger.info "Killing %s..." % container_name
+        CDEDocker.kill(container_name)
+      end
+      end
 
         def self.match_key(key)
             key = key.split(' ')[0]
@@ -107,7 +107,7 @@ module AdminUtils
                     if !ext.nil? and !valid_exts.include? ext
                         set.push(c) if basename.length > 16 # basename check tries to filter out non env containers
                     else
-                    	set.push(c) if groups.include? ext
+                      set.push(c) if groups.include? ext
                     end
                 else
                     set.push(c) if groups.include? ext

@@ -2,22 +2,22 @@ require 'open3'
 require "net/http"
 
 namespace :admin do
-	
-	desc "Check if main app is running"
-	task :check_app => :environment do
-		Rails.logger.info "Checking %s:%s" % [ENV['HOST_IP_ADDR'], ENV['HOST_PORT']]
-		responding = ApplicationHelper.up? ENV['HOST_IP_ADDR'], ENV['HOST_PORT']		
+  
+  desc "Check if main app is running"
+  task :check_app => :environment do
+    Rails.logger.info "Checking %s:%s" % [ENV['HOST_IP_ADDR'], ENV['HOST_PORT']]
+    responding = ApplicationHelper.up? ENV['HOST_IP_ADDR'], ENV['HOST_PORT']    
 
-		if responding
-			#res = ApplicationHelper.emit_to_master 
-			res = MasterServer.update_slave_server
-			Rails.logger.info "Successfully updated master!" if res.code == '200'
-		end
-	end
+    if responding
+      #res = ApplicationHelper.emit_to_master 
+      res = MasterServer.update_slave_server
+      Rails.logger.info "Successfully updated master!" if res.code == '200'
+    end
+  end
 
-	desc "Monitor CPU intensive processes in active containers"
-	task :monitor_cpu_usage => :environment do
-		Rails.logger.info "Checking CPU intensive processes in containers..." 
+  desc "Monitor CPU intensive processes in active containers"
+  task :monitor_cpu_usage => :environment do
+    Rails.logger.info "Checking CPU intensive processes in containers..." 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         next if m.locked?
@@ -78,11 +78,11 @@ namespace :admin do
         ensure
             m.unlock
         end
-	end
+  end
 
-	desc "Stop containers that have not been used accessed after 3 hours" 
-	task :stop_containers => :environment do 
-	    Rails.logger.info "Garbage collecting environment containers..."
+  desc "Stop containers that have not been used accessed after 3 hours" 
+  task :stop_containers => :environment do 
+      Rails.logger.info "Garbage collecting environment containers..."
         three_hours = 3 * 3600 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
@@ -125,11 +125,11 @@ namespace :admin do
         ensure
             m.unlock
         end
-	end
+  end
 
-	desc "Remove containers that have not been accessed after 2 weeks" 
-	task :remove_containers => :environment do 
-	    Rails.logger.info "Removing environment containers..."
+  desc "Remove containers that have not been accessed after 2 weeks" 
+  task :remove_containers => :environment do 
+      Rails.logger.info "Removing environment containers..."
         two_weeks = 2 * 7 * 24 * 3600 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
@@ -168,84 +168,84 @@ namespace :admin do
         ensure
             m.unlock
         end
-	end
+  end
 
-	desc "Revive fs containers"
-	task :start_fs => :environment do
-		Rails.logger.debug "Starting fs containers at %s" % Time.now.to_s
+  desc "Revive fs containers"
+  task :start_fs => :environment do
+    Rails.logger.debug "Starting fs containers at %s" % Time.now.to_s
 
         containers = AdminUtils::Containers.filter_exited('fc', 'fs')
         for c in containers
-			name = c.info['Names'][0]
+      name = c.info['Names'][0]
 
-        	basename = CDEDocker::Utils.container_basename(name)
-			key = basename + Constants.cache[:LAST_ACCESS]
-			last_updated = Rails.cache.read(key)
-			next if last_updated.nil?
+          basename = CDEDocker::Utils.container_basename(name)
+      key = basename + Constants.cache[:LAST_ACCESS]
+      last_updated = Rails.cache.read(key)
+      next if last_updated.nil?
 
-			if Time.now - last_updated  < 600
-			    Rails.logger.debug "Starting containers %s..." % name
+      if Time.now - last_updated  < 600
+          Rails.logger.debug "Starting containers %s..." % name
                 CDEDocker.start(name) 
-			end
+      end
 
-			sleep 0.25
+      sleep 0.25
         end
-	end
+  end
 
-	# rake admin:clean_fs
-	desc "Garbage collect fs containers"
-	task :clean_fs => :environment do
-		Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
+  # rake admin:clean_fs
+  desc "Garbage collect fs containers"
+  task :clean_fs => :environment do
+    Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
 
-		now = Time.now
+    now = Time.now
         containers = AdminUtils::Containers.filter('fc', 'fs')
 
         max = containers.length / 3 + 1
         stopped = 0
-		for c in containers
-		    break if stopped > max
-			name = c.info['Names'][0]
+    for c in containers
+        break if stopped > max
+      name = c.info['Names'][0]
 
-			# Check if user has been non-idle for last hour
-			basename = CDEDocker::Utils.container_basename(name)
-			key = basename + Constants.cache[:LAST_ACCESS]
-			last_updated = Rails.cache.read(key)
+      # Check if user has been non-idle for last hour
+      basename = CDEDocker::Utils.container_basename(name)
+      key = basename + Constants.cache[:LAST_ACCESS]
+      last_updated = Rails.cache.read(key)
 
-			keep = false
-			if last_updated.nil?
-				Rails.cache.write(key, now)
-			else
-				keep = (now - last_updated < 120)
-				Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 120]
-			end
-			
-			# File system servers have a day to live
-			keep = true if CDEDocker::Utils.container_env(name) == 'fs'
-			if keep
-				# Check if container has been started this day
-				container = Docker::Container.get(c.id)
-				started_at = container.info['State']['StartedAt']
-				timestamp = DateTime.rfc3339(started_at)
-				keep = false if Time.now - timestamp > 86400
-				Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
-			end
+      keep = false
+      if last_updated.nil?
+        Rails.cache.write(key, now)
+      else
+        keep = (now - last_updated < 120)
+        Rails.logger.info "%s has %s seconds left..." % [name, last_updated - now + 120]
+      end
+      
+      # File system servers have a day to live
+      keep = true if CDEDocker::Utils.container_env(name) == 'fs'
+      if keep
+        # Check if container has been started this day
+        container = Docker::Container.get(c.id)
+        started_at = container.info['State']['StartedAt']
+        timestamp = DateTime.rfc3339(started_at)
+        keep = false if Time.now - timestamp > 86400
+        Rails.logger.info "%s has been running %s seconds..." % [name, Time.now - timestamp]
+      end
 
-			if not keep
-				Rails.logger.debug "Stopping container %s..." % name
-				CDEDocker.kill(name) 
-				stopped += 1 # Update number of stopped containers
-			end
+      if not keep
+        Rails.logger.debug "Stopping container %s..." % name
+        CDEDocker.kill(name) 
+        stopped += 1 # Update number of stopped containers
+      end
 
-			sleep 1
-		end
-	end
+      sleep 1
+    end
+  end
 
-	desc "If disk grows by a certain rate, fix that"
-	task :check_disk => :environment do 
-	    Rails.logger.info "Checking disk usage..."
+  desc "If disk grows by a certain rate, fix that"
+  task :check_disk => :environment do 
+      Rails.logger.info "Checking disk usage..."
 
-		max_disk_size = 10 ** 9
-		max_diff_rate = 10 ** 7 
+    max_disk_size = 10 ** 9
+    max_diff_rate = 10 ** 7 
 
         m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
         next if m.locked?
@@ -274,7 +274,7 @@ namespace :admin do
                 end
                 
                 # Kill the container if the size is above a certain threshold
-				basename = CDEDocker::Utils.container_basename(container_name)
+        basename = CDEDocker::Utils.container_basename(container_name)
                 if disk_size >= max_disk_size
                     Rails.logger.info "%s has breached the max disk size of %sMB" % [basename, max_disk_size / Numeric::MEGABYTE]
                     #stdout, stderr, status = Open3.capture3('docker kill %s' % container_name)
@@ -299,6 +299,6 @@ namespace :admin do
         ensure
             m.unlock
         end
-	end
+  end
 
 end
