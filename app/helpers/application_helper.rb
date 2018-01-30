@@ -63,5 +63,17 @@ module ApplicationHelper
       :memory => snapshot.memory.free * snapshot.memory.pagesize / 1000000
     }
   end
+  
+  def self.migrate_container(container_name)
+    slave = ClusterProxy::Slave.new
 
+    res = slave.transfer(container_name, 'copy', '/')
+
+    if !res.nil? && res.code == '200'
+      settings = ApplicationHelper.get_settings
+      proxy = ClusterProxy::Master.new
+      group_name = settings["application"]["group_name"]
+      res = proxy.migrate_container(group_name, ENV['GROUP_PASSWORD'], container_name, res.body)
+    end
+  end
 end
