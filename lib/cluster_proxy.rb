@@ -8,6 +8,7 @@ module ClusterProxy
         'announce' => '/application/acknowledge',
         'update-disk-usage' => '/containers/update_disk_usage',
         'migrate-container' => '/servers/migrate',
+        'backup-container' => '/servers/backup',
         'transfer-files' => '/file/transfer'
       }[action]
     end
@@ -85,6 +86,18 @@ module ClusterProxy
 
     def migrate_container(group_name, password, container_name, file_name)
       url = get_master_endpoint('migrate-container')
+      return nil if url.nil?
+
+      return send_post_request(url, {
+       :group_name => group_name,
+       :password => password,
+       :container_name => container_name,
+       :file_name => file_name
+      })
+    end
+
+    def backup_container(group_name, password, container_name, file_name)
+      url = get_master_endpoint('backup-container')
       return nil if url.nil?
 
       return send_post_request(url, {

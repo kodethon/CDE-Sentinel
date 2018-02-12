@@ -76,4 +76,21 @@ module ApplicationHelper
       res = proxy.migrate_container(group_name, ENV['GROUP_PASSWORD'], container_name, res.body)
     end
   end
+
+  def self.backup_container(container_name)
+    slave = ClusterProxy::Slave.new
+    res = slave.transfer(container_name, 'copy', '/')
+    return if res.nil? 
+
+    case res.code
+      when '200'
+        settings = ApplicationHelper.get_settings
+        proxy = ClusterProxy::Master.new
+        group_name = settings["application"]["group_name"]
+        res = proxy.backup_container(group_name, ENV['GROUP_PASSWORD'], container_name, res.body)
+      else
+        Rails.logger.info(res.body)
+      end
+    return res
+  end
 end
