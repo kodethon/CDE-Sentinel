@@ -1,6 +1,3 @@
-require 'open3'
-require "net/http"
-
 namespace :admin do
   
   desc "Check if main app is running"
@@ -275,7 +272,6 @@ namespace :admin do
         basename = CDEDocker::Utils.container_basename(container_name)
         if disk_size >= max_disk_size
           Rails.logger.info "%s has breached the max disk size of %sMB" % [basename, max_disk_size / Numeric::MEGABYTE]
-          #stdout, stderr, status = Open3.capture3('docker kill %s' % container_name)
           matches = AdminUtils::Containers.match_key(basename)
           AdminUtils::Containers.kill_all(matches)
         else
