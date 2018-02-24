@@ -79,7 +79,7 @@ module ApplicationHelper
 
   def self.backup_container(container_name)
     slave = ClusterProxy::Slave.new
-    res = slave.transfer(container_name, 'copy', '/')
+    res = slave.transfer(container_name, 'sync', '/')
     return if res.nil? 
 
     case res.code
