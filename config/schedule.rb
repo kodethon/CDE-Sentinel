@@ -48,15 +48,17 @@ if is_slave
 end
 
 if is_slave or is_fs 
-=begin
     every 7.minutes do
         rake "admin:start_fs"
     end
-=end
 
     # Disable file sync for idle containers
-    every 10.minutes do
+    every 6.hours do
         rake "admin:clean_fs"
+    end
+
+    every 5.minutes do 
+      rake "admin:replicate"
     end
 end
 

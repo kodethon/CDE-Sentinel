@@ -295,4 +295,21 @@ namespace :admin do
     end
   end # check_disk
 
+  desc "Initate replicationi process"
+  task :replicate => :environment do 
+    containers = AdminUtils::Containers.filter('fc')
+    for c in containers
+      container_name = c.info['Names'][0]
+      stdout, stderr, status = CDEDocker.exec(['ls', '/tmp/__DIRTY__'], {}, container_name)
+
+      if status == 0
+        basename = CDEDocker::Utils.container_basename(container_name)
+        ApplicationHelper.backup_container(basename)
+        stdout, stderr, status = CDEDocker.exec(['rm', '/tmp/__DIRTY__'], {}, container_name)
+      end
+
+      sleep 1
+    end
+  end
+
 end
