@@ -1,6 +1,10 @@
 require "net/http"
 
 module ApplicationHelper
+
+  def self.res_success?(res)
+    return !res.nil? && res.code == '200'
+  end
   
   def self.up?(server, port)
     begin

@@ -28,7 +28,7 @@ module CDEDocker
       if index == images.length - 1
         container = self.get_container(container_name)
         return false if container.nil?
-        Rails.logger.info "%s %s..." % [action, container_name]
+        Rails.logger.debug "%s %s..." % [action, container_name]
         return callback.call container
       end # if
 
@@ -37,7 +37,7 @@ module CDEDocker
       container = self.get_container(container_link_name)
       
       if not container.nil?
-        Rails.logger.info "%s %s..." % [action, container_link_name]
+        Rails.logger.debug "%s %s..." % [action, container_link_name]
         success = callback.call container 
         return false if not success
       end
@@ -125,8 +125,8 @@ module CDEDocker
 
     command = command.split(' ') if !command.is_a? Array
     
-    Rails.logger.info "Executing command as %s..." % (options[:user] || 'default')
-    Rails.logger.info command
+    Rails.logger.debug "Executing command as %s..." % (options[:user] || 'default')
+    Rails.logger.debug command
 
     return container.exec(command, options)
   end

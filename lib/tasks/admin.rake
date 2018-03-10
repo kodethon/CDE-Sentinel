@@ -295,17 +295,24 @@ namespace :admin do
     end
   end # check_disk
 
-  desc "Initate replicationi process"
+  desc "Iterate through all fc containers and replicate if dirty"
   task :replicate => :environment do 
+    Rails.logger.info "Initiating replication process..."
+
     containers = AdminUtils::Containers.filter('fc')
     for c in containers
       container_name = c.info['Names'][0]
       stdout, stderr, status = CDEDocker.exec(['ls', '/tmp/__DIRTY__'], {}, container_name)
 
-      if status == 0
+      if status != 0
+        Rails.logger.info "Replicating %s..." % container_name
         basename = CDEDocker::Utils.container_basename(container_name)
-        ApplicationHelper.backup_container(basename)
-        stdout, stderr, status = CDEDocker.exec(['rm', '/tmp/__DIRTY__'], {}, container_name)
+        res = ApplicationHelper.backup_container(basename)
+        if !ApplicationHelper.res_success?(res)
+          Rails.logger.warn "Failed to replicate: %s" % (res.nil? ? 'No response :/' : "%s - %s" % [res.code, res.body])
+        else
+          stdout, stderr, status = CDEDocker.exec(['rm', '/tmp/__DIRTY__'], {}, container_name)
+        end
       end
 
       sleep 1
