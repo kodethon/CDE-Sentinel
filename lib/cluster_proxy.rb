@@ -89,10 +89,12 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-       :group_name => group_name,
-       :password => password,
-       :container_name => container_name,
-       :file_name => file_name
+        :hostname => Constants.app[:HOST_IP_ADDR],
+        :port => Constants.app[:HOST_PORT],
+        :group_name => group_name,
+        :password => password,
+        :container_name => container_name,
+        :file_name => file_name
       })
     end
 
@@ -101,10 +103,12 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-       :group_name => group_name,
-       :password => password,
-       :container_name => container_name,
-       :file_name => file_name
+        :hostname => Constants.app[:HOST_IP_ADDR],
+        :port => Constants.app[:HOST_PORT],
+        :group_name => group_name,
+        :password => password,
+        :container_name => container_name,
+        :file_name => file_name
       })
     end
   end
