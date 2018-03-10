@@ -304,7 +304,7 @@ namespace :admin do
       container_name = c.info['Names'][0]
       stdout, stderr, status = CDEDocker.exec(['ls', '/tmp/__DIRTY__'], {}, container_name)
 
-      if status != 0
+      if status == 0
         Rails.logger.info "Replicating %s..." % container_name
         basename = CDEDocker::Utils.container_basename(container_name)
         res = ApplicationHelper.backup_container(basename)
