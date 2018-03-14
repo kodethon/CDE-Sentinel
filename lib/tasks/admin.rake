@@ -264,6 +264,7 @@ namespace :admin do
     Rails.logger.info "Initiating replication process..."
     Rails.logger.info Process.uid
     begin
+      ZFS.zpool_path = '/sbin/zpool'
       Rails.logger.info ZFS.pools
     rescue => err
       Rails.logger.error err
