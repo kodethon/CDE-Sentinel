@@ -133,45 +133,4 @@ module AdminUtils
         return container_with_term
       end
     end
-
-    class Disk
-        def self.du_sh_to_bytes(mount_src)
-            return 0 if mount_src.nil? or !mount_src
-            disk_size = 0
-            stdout, stderr, status = Open3.capture3('du -sh %s' % mount_src)
-            mount_size = 0
-            if stdout.length != 0
-                stdout = stdout.split(" ")[0]
-                lastIndex = stdout.length - 2
-                mount_size = stdout[0..lastIndex].to_i
-                if stdout[-1] ==  "K"
-                    mount_size *= (10**3)
-                elsif stdout[-1] == "M"
-                    mount_size *= (10**6)
-                elsif stdout[-1] == "G"
-                    mount_size *= (10**9)
-                end
-                disk_size += mount_size
-            end
-            return disk_size
-        end
-
-        def self.growth_threshold_breached?
-            # Check for disk growth rate
-            snapshot = Vmstat.snapshot
-            disk = snapshot.disks[0]
-            block_size = disk['block_size']
-            cur_available_disk = disk['available_blocks']
-            prev_available_disk = Rails.cache.read(Constants.cache[:AVAILABLE_DISK])
-            if prev_available_disk.nil?
-                Rails.cache.write(Constants.cache[:AVAILABLE_DISK], cur_available_disk)
-                prev_available_disk = Rails.cache.read(Constants.cache[:AVAILABLE_DISK])
-            end
-
-            # Positive difference.
-            diff = (-1) * block_size * (cur_available_disk - prev_available_disk)
-            return diff >= -(10**10)
-        end
-    end
-
 end

@@ -263,7 +263,11 @@ namespace :admin do
   task :zfs_replicate => :environment do
     Rails.logger.info "Initiating replication process..."
     Rails.logger.info Process.uid
-    Rails.logger.info ZFS.pools.length
+    begin
+      Rails.logger.info ZFS.pools
+    rescue => err
+      Rails.logger.error err
+    end
   end
 
 end
