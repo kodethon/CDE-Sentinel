@@ -39,6 +39,7 @@ if is_slave
     end
 end
 
+=begin
 if is_slave
     # Start file sync containers for active containers
     every 10.minutes do
@@ -54,6 +55,7 @@ if is_slave
       rake "admin:replicate"
     end
 end
+=end
 
 # Stop containers that have been idle for a long time
 every 17.minutes do
