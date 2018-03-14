@@ -19,5 +19,6 @@
 .*sw*
 .byebug_history
 config/settings.yml
+config/config.yml
 
 vendor/bundle/*

@@ -2,20 +2,6 @@ require 'net/http'
 
 module Utils
 
-    class Env
-        
-        def self.resolve_path(path)
-            toks = path.split('/')
-            a = toks[-1]
-            b = toks[-2]
-            c = toks[-3]
-            x = File.dirname ENV['SELF_SYSTEM_ROOT']
-
-            return File.join(x, c, b, a)
-        end
-
-    end
-
     class Mutex
         
         def initialize(key, count=1)
@@ -64,7 +50,6 @@ module Utils
       http = Net::HTTP.new(url.host, url.port)
       http.read_timeout = 15 # seconds
       http.open_timeout = 5
-      #http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
       http.use_ssl = (url.scheme == 'https')
       
       post_data = URI.encode_www_form(params)
@@ -92,7 +77,6 @@ module Utils
       http = Net::HTTP.new(url.host, url.port)
       http.read_timeout = 15 # seconds
       http.open_timeout = 5
-      #http.use_ssl = (ENV['NO_HTTPS'].nil? or ENV['NO_HTTPS'].length == 0)
       http.use_ssl = (url.scheme == 'https')
     
       # Request object. 

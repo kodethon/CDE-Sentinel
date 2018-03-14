@@ -2,8 +2,8 @@ namespace :admin do
   
   desc "Check if main app is running"
   task :check_app => :environment do
-    Rails.logger.info "Checking %s:%s" % [ENV['HOST_IP_ADDR'], ENV['HOST_PORT']]
-    responding = ApplicationHelper.up? ENV['HOST_IP_ADDR'], ENV['HOST_PORT']    
+    Rails.logger.info "Checking %s:%s" % [Config.instance['HOST_IP_ADDR'], Config.instance['HOST_PORT']]
+    responding = ApplicationHelper.up? Config.instance['HOST_IP_ADDR'], Config.instance['HOST_PORT']    
 
     if responding
       #res = ApplicationHelper.emit_to_master 
@@ -234,66 +234,6 @@ namespace :admin do
       sleep 1
     end
   end
-
-  desc "If disk grows by a certain rate, fix that"
-  task :check_disk => :environment do 
-    Rails.logger.info "Checking disk usage..."
-
-    max_disk_size = 10 ** 9
-    max_diff_rate = 10 ** 7 
-
-    m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
-    next if m.locked?
-    # Lock access to fc containers
-    m.lock
-        
-    begin
-      if not AdminUtils::Disk.growth_threshold_breached?()
-        Rails.logger.info "Disk looks fine."
-        now = Time.now.localtime
-        # Allow one run at 5AM otherwise block
-        next if now.hour != 5 and now.min > 5
-      end
-
-      # If disk is growing too quickly:
-      #container_with_term = AdminUtils::Containers.get_term_containers()
-      containers = AdminUtils::Containers.filter('fc')
-      for c in containers
-        container_name = c.info['Names'][0]
-
-        # Sum up the disk size in bytes of all container mount points
-        disk_size = 0
-        for mount in c.info['Mounts']
-          resolved_path = Utils::Env.resolve_path(mount['Source'])
-          disk_size += AdminUtils::Disk.du_sh_to_bytes(resolved_path)
-        end
-        
-        # Kill the container if the size is above a certain threshold
-        basename = CDEDocker::Utils.container_basename(container_name)
-        if disk_size >= max_disk_size
-          Rails.logger.info "%s has breached the max disk size of %sMB" % [basename, max_disk_size / Numeric::MEGABYTE]
-          matches = AdminUtils::Containers.match_key(basename)
-          AdminUtils::Containers.kill_all(matches)
-        else
-          Rails.logger.info "%s has used %sMB..." % [basename, disk_size / Numeric::MEGABYTE]
-        end
-
-        settings = ApplicationHelper.get_settings
-        group_name = settings["application"]["group_name"]
-        proxy = ClusterProxy::Master.new
-        res = proxy.update_disk_usage(group_name, basename, disk_size)
-        if !res.nil? and res.code == '200'
-          Rails.logger.info "Successfully updated disk usage for %s" % basename
-        end
-
-        sleep 1
-      end # For each term container
-    rescue => err
-      Rails.logger.error err
-    ensure
-      m.unlock
-    end
-  end # check_disk
 
   desc "Iterate through all fc containers and replicate if dirty"
   task :replicate => :environment do 
