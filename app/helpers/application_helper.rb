@@ -44,9 +44,9 @@ module ApplicationHelper
     return proxy.emit_to_master({
       :app_key => self.get_app_key(),
       :group_name => settings['application']['group_name'],
-      :ip_addr => Constants.host[:IP_ADDR],
+      :ip_addr => Env.instance[:HOST_IP_ADDR],
+      :port => Env.instance[:HOST_PORT],
       :password => Env.instance['GROUP_PASSWORD'],
-      :port => Constants.host[:PORT],
       :config => settings.to_json
     }.merge(self.get_resource_usage()))
   end

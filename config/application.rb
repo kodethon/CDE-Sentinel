@@ -21,7 +21,7 @@ module CdeBackup
     # config.i18n.default_locale = :de
     
     config.eager_load_paths << Rails.root.join('lib')
-		cache_host = "%s:%s" % [ENV['MEMCACHE_PORT_11211_TCP_ADDR'], ENV['MEMCACHE_PORT_11211_TCP_PORT']]
+		cache_host = "%s:%s" % [Config.instance['MEMCACHE_IP_ADDR'], Config.instance['MEMCACHE_PORT']]
 		config.cache_store = :dalli_store, cache_host, { :pool_size => 16 }
 
     # Do not swallow errors in after_commit/after_rollback callbacks.

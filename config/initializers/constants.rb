@@ -17,11 +17,4 @@ class Constants
       :AVAILABLE_DISK => 'available-disk'
     }
   end
-
-  def self.host 
-    return {
-      :IP_ADDR => ENV['HOST_IP_ADDR'],
-      :PORT => ENV['HOST_PORT'],
-    }
-  end
 end

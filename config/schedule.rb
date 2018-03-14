@@ -19,21 +19,11 @@
 
 # Learn more: http://github.com/javan/whenever
 
-env :MASTER_IP_ADDR, ENV['MASTER_IP_ADDR']
-env :MASTER_PORT, ENV['MASTER_PORT']
-env :HOST_IP_ADDR, ENV['HOST_IP_ADDR']
-env :HOST_PORT, ENV['HOST_PORT']
-env :GROUP_PASSWORD, ENV['GROUP_PASSWORD']
-env :NO_HTTPS, ENV['NO_HTTPS']
-env :NAMESPACE, ENV['NAMESPACE']
-env :MEMCACHE_PORT_11211_TCP_ADDR, ENV['MEMCACHE_PORT_11211_TCP_ADDR']
-env :MEMCACHE_PORT_11211_TCP_PORT, ENV['MEMCACHE_PORT_11211_TCP_PORT']
-
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
-is_slave = ENV['APP_TYPE'] == 'slave'
-is_fs = ENV['APP_TYPE'] == 'fs'
-is_proxy = ENV['APP_TYPE'] == 'proxy'
+is_slave = Config.instance['APP_TYPE'] == 'slave'
+is_fs = Config.instance['APP_TYPE'] == 'fs'
+is_proxy = Config.instance['APP_TYPE'] == 'proxy'
 
 # Send a heart beat to master component
 every 5.minutes do

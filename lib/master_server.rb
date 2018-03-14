@@ -24,8 +24,8 @@ module MasterServer
     data = {
       group_name: settings['application']['group_name'],
       password: Env.instance['GROUP_PASSWORD'],
-      ip_addr: Constants.host[:IP_ADDR],
-      port: Constants.host[:PORT],
+      ip_addr: Env.instance[:HOST_IP_ADDR],
+      port: Env.instance[:HOST_PORT],
       config: settings.to_json
     }
     data = data.merge(SlaveServer.get_resource_usage)
