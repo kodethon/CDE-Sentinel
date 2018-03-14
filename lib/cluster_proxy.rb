@@ -18,8 +18,8 @@ module ClusterProxy
   class Proxy
     
     def get_master_endpoint(action)
-      ip_addr = Constants.app[:MASTER_IP_ADDR]
-      port = Constants.app[:MASTER_PORT]
+      ip_addr = Env.instance['MASTER_IP_ADDR']
+      port = Env.instance['MASTER_PORT']
       
       return nil if ip_addr.nil? 
 
@@ -89,8 +89,8 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-        :hostname => Constants.app[:HOST_IP_ADDR],
-        :port => Constants.app[:HOST_PORT],
+        :hostname => Env.instance['HOST_IP_ADDR'],
+        :port => Env.instance['HOST_PORT'],
         :group_name => group_name,
         :password => password,
         :container_name => container_name,
@@ -103,8 +103,8 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-        :hostname => Constants.app[:HOST_IP_ADDR],
-        :port => Constants.app[:HOST_PORT],
+        :hostname => Env.instance['HOST_IP_ADDR'],
+        :port => Env.instance['HOST_PORT'],
         :group_name => group_name,
         :password => password,
         :container_name => container_name,

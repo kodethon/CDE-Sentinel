@@ -22,11 +22,11 @@ require_relative '../lib/env.rb'
 # Learn more: http://github.com/javan/whenever
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
-set :environment, Env.instance[:IS_PRODUCTION] ? 'production' : 'development'
+set :environment, Env.instance['IS_PRODUCTION'] ? 'production' : 'development'
 
-is_slave = Env.instance[:APP_TYPE] == 'slave'
-is_fs = Env.instance[:APP_TYPE] == 'fs'
-is_proxy = Env.instance[:APP_TYPE] == 'proxy'
+is_slave = Env.instance['APP_TYPE'] == 'slave'
+is_fs = Env.instance['APP_TYPE'] == 'fs'
+is_proxy = Env.instance['APP_TYPE'] == 'proxy'
 
 # Send a heart beat to master component
 every 5.minutes do
@@ -57,6 +57,10 @@ if is_slave
     end
 end
 =end
+
+every 1.minute do 
+  rake "admin:zfs_replicate"
+end
 
 # Stop containers that have been idle for a long time
 every 17.minutes do

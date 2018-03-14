@@ -4,8 +4,8 @@ module MasterServer
   # Given a path identifying an endpoint on the server, build a URL for the
   # master server.
   def self.build_url(path)
-    ip_addr = Constants.app[:MASTER_IP_ADDR]
-    port = Constants.app[:MASTER_PORT]
+    ip_addr = Env.instance['MASTER_IP_ADDR']
+    port = Env.instance['MASTER_PORT']
 
     return nil if ip_addr.nil?
 
@@ -24,8 +24,8 @@ module MasterServer
     data = {
       group_name: settings['application']['group_name'],
       password: Env.instance['GROUP_PASSWORD'],
-      ip_addr: Env.instance[:HOST_IP_ADDR],
-      port: Env.instance[:HOST_PORT],
+      ip_addr: Env.instance['HOST_IP_ADDR'],
+      port: Env.instance['HOST_PORT'],
       config: settings.to_json
     }
     data = data.merge(SlaveServer.get_resource_usage)
