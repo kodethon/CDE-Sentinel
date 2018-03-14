@@ -22,6 +22,7 @@ require_relative '../lib/env.rb'
 # Learn more: http://github.com/javan/whenever
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
+set :environment, Env.instance[:IS_PRODUCTION] ? 'production' : 'development'
 
 is_slave = Env.instance[:APP_TYPE] == 'slave'
 is_fs = Env.instance[:APP_TYPE] == 'fs'
