@@ -9,7 +9,7 @@ module MasterServer
 
     return nil if ip_addr.nil?
 
-    url = (Config.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr
+    url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr
     url += ':' + port if !port.nil? && !port.empty?
     url += path
     url
@@ -23,7 +23,7 @@ module MasterServer
 
     data = {
       group_name: settings['application']['group_name'],
-      password: Config.instance['GROUP_PASSWORD'],
+      password: Env.instance['GROUP_PASSWORD'],
       ip_addr: Constants.host[:IP_ADDR],
       port: Constants.host[:PORT],
       config: settings.to_json

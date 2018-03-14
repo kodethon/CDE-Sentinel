@@ -23,19 +23,19 @@ module ClusterProxy
       
       return nil if ip_addr.nil? 
 
-      url = (Config.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
+      url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
       url += ':' + port if !port.nil? and port.length > 0
       url += ClusterProxy::PathFactory.get(action)
       return url
     end
 
     def get_slave_endpoint(action)
-      ip_addr = Config.instance['HOST_IP_ADDR']
-      port = Config.instance['HOST_PORT']
+      ip_addr = Env.instance['HOST_IP_ADDR']
+      port = Env.instance['HOST_PORT']
       
       return nil if ip_addr.nil? 
 
-      url = (Config.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
+      url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
       url += ':' + port if !port.nil? and port.length > 0
       url += ClusterProxy::PathFactory.get(action)
       return url

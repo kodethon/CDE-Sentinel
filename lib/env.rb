@@ -1,7 +1,7 @@
 require 'singleton'
 require 'yaml'
 
-class Config
+class Env
   include Singleton
 
   def initialize

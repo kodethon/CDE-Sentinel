@@ -11,7 +11,7 @@ module ApplicationHelper
       http = Net::HTTP.new(server, port)
       http.read_timeout = 5
       http.open_timeout = 5
-      http.use_ssl = Config.instance['IS_PRODUCTION']
+      http.use_ssl = Env.instance['IS_PRODUCTION']
       response = http.request_get('/application/ping')
       response.code == "200"
     rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET
@@ -45,7 +45,7 @@ module ApplicationHelper
       :app_key => self.get_app_key(),
       :group_name => settings['application']['group_name'],
       :ip_addr => Constants.host[:IP_ADDR],
-      :password => Config.instance['GROUP_PASSWORD'],
+      :password => Env.instance['GROUP_PASSWORD'],
       :port => Constants.host[:PORT],
       :config => settings.to_json
     }.merge(self.get_resource_usage()))
@@ -77,7 +77,7 @@ module ApplicationHelper
       settings = ApplicationHelper.get_settings
       proxy = ClusterProxy::Master.new
       group_name = settings["application"]["group_name"]
-      res = proxy.migrate_container(group_name, Config.instance['GROUP_PASSWORD'], container_name, res.body)
+      res = proxy.migrate_container(group_name, Env.instance['GROUP_PASSWORD'], container_name, res.body)
     end
   end
 
@@ -91,7 +91,7 @@ module ApplicationHelper
         settings = ApplicationHelper.get_settings
         proxy = ClusterProxy::Master.new
         group_name = settings["application"]["group_name"]
-        res = proxy.backup_container(group_name, Config.instance['GROUP_PASSWORD'], container_name, res.body)
+        res = proxy.backup_container(group_name, Env.instance['GROUP_PASSWORD'], container_name, res.body)
       else
         Rails.logger.info(res.body)
       end
