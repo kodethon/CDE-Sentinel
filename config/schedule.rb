@@ -1,3 +1,5 @@
+require_relative '../lib/env.rb'
+
 # Use this file to easily define all of your cron jobs.
 #
 # It's helpful, but not entirely necessary to understand cron before proceeding.
@@ -21,9 +23,9 @@
 
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 
-is_slave = Config.instance['APP_TYPE'] == 'slave'
-is_fs = Config.instance['APP_TYPE'] == 'fs'
-is_proxy = Config.instance['APP_TYPE'] == 'proxy'
+is_slave = Env.instance[:APP_TYPE] == 'slave'
+is_fs = Env.instance[:APP_TYPE] == 'fs'
+is_proxy = Env.instance[:APP_TYPE] == 'proxy'
 
 # Send a heart beat to master component
 every 5.minutes do

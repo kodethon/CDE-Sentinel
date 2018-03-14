@@ -1,6 +1,7 @@
 require File.expand_path('../boot', __FILE__)
 
 require 'rails/all'
+require File.dirname(__FILE__) + '/../lib/env.rb'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -21,7 +22,7 @@ module CdeBackup
     # config.i18n.default_locale = :de
     
     config.eager_load_paths << Rails.root.join('lib')
-		cache_host = "%s:%s" % [Config.instance['MEMCACHE_IP_ADDR'], Config.instance['MEMCACHE_PORT']]
+		cache_host = "%s:%s" % [Env.instance[:MEMCACHE_IP_ADDR], Env.instance[:MEMCACHE_PORT]]
 		config.cache_store = :dalli_store, cache_host, { :pool_size => 16 }
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
