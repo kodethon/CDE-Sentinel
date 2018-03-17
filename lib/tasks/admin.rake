@@ -2,8 +2,8 @@ namespace :admin do
   
   desc "Check if main app is running"
   task :check_app => :environment do
-    Rails.logger.info "Checking %s:%s" % [Env.instance['HOST_IP_ADDR'], Env.instance['HOST_PORT']]
-    responding = ApplicationHelper.up? Env.instance['HOST_IP_ADDR'], Env.instance['HOST_PORT']    
+    Rails.logger.info "Checking %s:%s" % [Env.instance['NODE_HOST'], Env.instance['NODE_PORT']]
+    responding = ApplicationHelper.up? Env.instance['NODE_HOST'], Env.instance['NODE_PORT']    
 
     if responding
       #res = ApplicationHelper.emit_to_master 

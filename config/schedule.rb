@@ -24,9 +24,9 @@ require_relative '../lib/env.rb'
 set :output, {:error => "log/cron_error_log.log", :standard => "log/cron_log.log"}
 set :environment, Env.instance['IS_PRODUCTION'] ? 'production' : 'development'
 
-is_slave = Env.instance['APP_TYPE'] == 'slave'
-is_fs = Env.instance['APP_TYPE'] == 'fs'
-is_proxy = Env.instance['APP_TYPE'] == 'proxy'
+is_slave = Env.instance['NODE_APP_TYPE'] == 'slave'
+is_fs = Env.instance['NODE_APP_TYPE'] == 'fs'
+is_proxy = Env.instance['NODE_APP_TYPE'] == 'proxy'
 
 # Send a heart beat to master component
 every 5.minutes do

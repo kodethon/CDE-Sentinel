@@ -30,8 +30,8 @@ module ClusterProxy
     end
 
     def get_slave_endpoint(action)
-      ip_addr = Env.instance['HOST_IP_ADDR']
-      port = Env.instance['HOST_PORT']
+      ip_addr = Env.instance['NODE_HOST']
+      port = Env.instance['NODE_PORT']
       
       return nil if ip_addr.nil? 
 
@@ -89,8 +89,8 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-        :hostname => Env.instance['HOST_IP_ADDR'],
-        :port => Env.instance['HOST_PORT'],
+        :hostname => Env.instance['NODE_HOST'],
+        :port => Env.instance['NODE_PORT'],
         :group_name => group_name,
         :password => password,
         :container_name => container_name,
@@ -103,8 +103,8 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, {
-        :hostname => Env.instance['HOST_IP_ADDR'],
-        :port => Env.instance['HOST_PORT'],
+        :hostname => Env.instance['NODE_HOST'],
+        :port => Env.instance['NODE_PORT'],
         :group_name => group_name,
         :password => password,
         :container_name => container_name,
