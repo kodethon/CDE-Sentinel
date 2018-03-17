@@ -47,6 +47,10 @@ GEM
     chronic (0.10.2)
     concurrent-ruby (1.0.5)
     connection_pool (2.2.1)
+    daemons (1.2.6)
+    daemons-rails (1.2.1)
+      daemons
+      multi_json (~> 1.0)
     dalli (2.7.6)
     docker-api (1.32.1)
       excon (>= 0.38.0)
@@ -137,6 +141,7 @@ DEPENDENCIES
   bunny
   byebug
   connection_pool
+  daemons-rails
   dalli
   docker-api (~> 1.32.1)
   excon (~> 0.52.0)

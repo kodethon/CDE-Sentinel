@@ -6,6 +6,7 @@ module MasterServer
   def self.build_url(path)
     ip_addr = Env.instance['MASTER_IP_ADDR']
     port = Env.instance['MASTER_PORT']
+    port = port.to_s if !port.nil?
 
     return nil if ip_addr.nil?
 

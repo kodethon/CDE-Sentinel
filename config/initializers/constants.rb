@@ -6,4 +6,12 @@ class Constants
       :LAST_ACCESS => '.modified'
     }
   end
+
+  def self.rabbitmq
+    return {
+      :CHANNELS => {
+        :ROOT_PUBLIC_KEY => 'root-install'
+      }
+    }
+  end
 end
