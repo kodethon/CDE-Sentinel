@@ -11,15 +11,17 @@ class Constants
     return {
       :DRIVES_DATASET => 'kodethon/production/drives',
       :SYSTEM_DATASET => 'kodethon/production/system',
-      :REPLICATION_HOSTS_PATH => 'config/replication_hosts.txt'
+      :REPLICATION_HOSTS_PATH => 'config/replication_hosts.txt',
+      :SYNCOID_PATH => Rails.root.join('vendor', 'sanoid', 'syncoid')
     }
   end
 
   def self.rabbitmq
     return {
       :EVENTS => {
-        :SET_REPLICATION_HOSTS => 'replication_hosts.set',
-        :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add'
+        :ADD_REPLICATION_HOSTS => 'replication_hosts.add',
+        :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add',
+        :REPLICATE_CONTAINER => 'container.replicate'
       }
     }
   end

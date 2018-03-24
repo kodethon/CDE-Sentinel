@@ -35,12 +35,28 @@ q.subscribe do |delivery_info, metadata, payload|
   end
 end
 
-# Add replication host
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_PUBLIC_KEY], :auto_delete => true)
+# Add replication hosts
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_REPLICATION_HOSTS], :auto_delete => true)
 q.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Received add replication hosts requests..."
+
   replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
   FileUtils.touch replication_hosts_path if not File.exists? replication_hosts_path
-  File.write(replication_hosts_path, payload)
+  
+  fp = File.open(replication_hosts_path, 'a+')
+  contents = fp.read
+  if !contents.include? payload
+    Rails.logger.info "Writing data to %s: %s" % [payload, replication_hosts_path]
+    fp.write(payload + "\n") 
+  end
+  fp.close
+end
+
+# Replicate container
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:REPLICATE_CONTAINER], :auto_delete => true)
+q.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Replicating %s" % payload
+  stdout, stderr, status = Utils::ZFS.replicate(payload)
 end
 
 $running = true

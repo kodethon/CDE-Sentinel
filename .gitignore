@@ -18,8 +18,11 @@
 
 .*sw*
 .byebug_history
+.rake_tasks~
+
 config/settings.yml
 config/env.yml
+config/replication_hosts.txt
 
 vendor/bundle/*
-.rake_tasks~
+vendor/sanoid
