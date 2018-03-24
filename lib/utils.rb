@@ -86,6 +86,29 @@ module Utils
       http.request(request)
     end
 
+  end
+
+  class ZFS
+
+    def self.replicate(name)
+      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])
+      if not File.exists? replication_hosts_path
+        Rails.logger.error "%s does not exists..." % Constants.zfs[:REPLICATION_HOSTS_PATH]
+        return
+      end
+      replication_hosts = File.read(replication_hosts_path)
+      hosts = replication_hosts.split("\n")
+      syncoid_path = Constants.zfs[:SYNCOID_PATH]
+      hosts.each do |host|
+        command = '%s %s %s:%s' % [syncoid_path, dataset, host, dataset]
+        Rails.logger.info "Running command: %s" % command
+        stdout, stderr, status = Open3.capture3(command)
+
+        Rails.logger.debug stdout
+        Rails.logger.debug stderr
+      end
+    end
 
   end
 

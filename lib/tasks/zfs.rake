@@ -16,18 +16,8 @@ namespace :zfs do
     containers = AdminUtils::Containers.filter_exited('term')
     for c in containers
       name = c.info['Names'][0]
-      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
-      replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])
-      if not File.exists? replication_hosts_path
-        Rails.logger.error "%s does not exists..." % Constants.zfs[:REPLICATION_HOSTS_PATH]
-        next
-      end
-      replication_hosts = File.read(replication_hosts_path)
-      hosts = replication_hosts.split("\n")
-      hosts.each do |host|
-        stdout, stderr, status = Open3.capture3('syncoid %s %s:%s', [dataset, host, dataset])
-      end
-    end # for ...
+      Utils::ZFS.replicate(name) 
+    end
   end # zfs_replicate
 
 end
