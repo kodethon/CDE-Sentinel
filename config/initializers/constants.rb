@@ -7,6 +7,14 @@ class Constants
     }
   end
 
+  def self.zfs
+    return {
+      :DRIVES_DATASET => 'kodethon/production/drives',
+      :SYSTEM_DATASET => 'kodethon/production/system',
+      :REPLICATION_HOSTS_PATH => 'config/replication_hosts.txt'
+    }
+  end
+
   def self.rabbitmq
     return {
       :CHANNELS => {
