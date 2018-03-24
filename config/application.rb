@@ -27,5 +27,18 @@ module CdeBackup
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
     config.active_record.raise_in_transactional_callbacks = true
+    
+    # Install sanoid for zfs replication
+    vendor_path = Rails.root.join('vendor')
+    sanoid_path = File.join(vendor_path, 'sanoid')
+    if not File.exists? sanoid_path
+      command = "cd %s && git clone %s" % [vendor_path, 'https://github.com/jimsalterjrs/sanoid.git']
+      stdout, stderr, status = Open3.capture3(command)
+      if status.exitstatus == 0
+        Rails.logger.warn "Please installing sanoid dependencies with: 'apt-get install -y pv lzop mbuffer'" 
+      else
+        Rails.logger.error "Could not clone sanoid repository from'https://github.com/jimsalterjrs/sanoid.git'"
+      end
+    end # if
   end
 end
