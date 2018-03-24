@@ -17,7 +17,7 @@ conn.start
 ch = conn.create_channel
 
 # Add root public key
-q  = ch.queue(Constants.rabbitmq[:CHANNELS][:ROOT_PUBLIC_KEY], :auto_delete => true)
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_PUBLIC_KEY], :auto_delete => true)
 q.subscribe do |delivery_info, metadata, payload|
   authorized_keys = File.join('/root/.ssh/authorized_keys')
   Rails.logger.info '%s exists?' % authorized_keys
@@ -33,6 +33,14 @@ q.subscribe do |delivery_info, metadata, payload|
     fp.write payload
     fp.close
   end
+end
+
+# Add replication host
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_PUBLIC_KEY], :auto_delete => true)
+q.subscribe do |delivery_info, metadata, payload|
+  replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
+  FileUtils.touch replication_hosts_path if not File.exists? replication_hosts_path
+  File.write(replication_hosts_path, payload)
 end
 
 $running = true

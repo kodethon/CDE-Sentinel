@@ -17,8 +17,9 @@ class Constants
 
   def self.rabbitmq
     return {
-      :CHANNELS => {
-        :ROOT_PUBLIC_KEY => 'root-install'
+      :EVENTS => {
+        :SET_REPLICATION_HOSTS => 'replication_hosts.set',
+        :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add'
       }
     }
   end

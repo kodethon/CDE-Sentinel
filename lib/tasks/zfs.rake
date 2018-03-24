@@ -23,7 +23,7 @@ namespace :zfs do
         next
       end
       replication_hosts = File.read(replication_hosts_path)
-      host = replication_hosts.split("\n")
+      hosts = replication_hosts.split("\n")
       hosts.each do |host|
         stdout, stderr, status = Open3.capture3('syncoid %s %s:%s', [dataset, host, dataset])
       end
