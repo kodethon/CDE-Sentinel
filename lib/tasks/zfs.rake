@@ -7,7 +7,8 @@ namespace :zfs do
     containers = Utils::Containers.filter('term')
     for c in containers
       name = c.info['Names'][0]
-      Utils::ZFS.replicate(name) 
+      basename = CDEDocker::Utils.container_basename(name)
+      Utils::ZFS.replicate(basename) 
     end
   end # replicate_term_containers
 
