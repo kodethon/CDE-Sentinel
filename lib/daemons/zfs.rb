@@ -61,7 +61,7 @@ q.subscribe do |delivery_info, metadata, payload|
 end
 
 # On container create, create zfs dataset for container
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 q.subscribe do |delivery_info, metadata, payload|
   Utils::ZFS.create(payload)
 end
