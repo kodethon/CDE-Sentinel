@@ -54,10 +54,10 @@ r.subscribe do |delivery_info, metadata, payload|
 end
 
 # On container modified, add it to replication queue
-replication_queue = Queue.new
+$replication_queue = Queue.new
 s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 s.subscribe do |delivery_info, metadata, payload|
-  replication_queue.push payload 
+  $replication_queue.push payload 
 end
 
 # On container create, create zfs dataset for container
@@ -75,8 +75,8 @@ end
 
 while($running) do
   # Dequeue a container to replication
-  if not replication_queue.empty?
-    container_name = replication_queue.pop
+  if not $replication_queue.empty?
+    container_name = $replication_queue.pop
     Rails.logger.info "Replicating %s" % container_name
     stdout, stderr, status = Utils::ZFS.replicate(container_name)
   end

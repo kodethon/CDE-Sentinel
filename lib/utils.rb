@@ -94,8 +94,10 @@ module Utils
     def self.create(name)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
       fs = ZFS(dataset)
-      return if fs.exist?
+      return nil if not fs.parent.exist?
+      return fs if fs.exist?
       fs.create
+      return fs
     end
 
     def self.replicate(name)
