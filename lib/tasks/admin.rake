@@ -7,7 +7,7 @@ namespace :admin do
 
     if responding
       #res = ApplicationHelper.emit_to_master 
-      res = MasterServer.update_slave_server
+      res = ClusterProxy::Master.update_slave_server
       Rails.logger.info "Successfully updated master!" if res.code == '200'
     end
   end

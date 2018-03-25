@@ -55,6 +55,8 @@ module ClusterProxy
 
   end
 
+  # This module will be a remote proxy for a master server.
+  # Methods here involve communication with a master server.
   class Master < Proxy
 
     def emit_to_master(data)
@@ -111,8 +113,46 @@ module ClusterProxy
         :file_name => file_name
       })
     end
+
+    # Given a path identifying an endpoint on the server, build a URL for the
+    # master server.
+    def self.build_url(path)
+      ip_addr = Env.instance['MASTER_IP_ADDR']
+      port = Env.instance['MASTER_PORT']
+      port = port.to_s if !port.nil?
+
+      return nil if ip_addr.nil?
+
+      url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr
+      url += ':' + port if !port.nil? && !port.empty?
+      url += path
+      url
+    end
+
+    # Update a slave server's information on the Master server.
+    # Reimplementation of ApplicationHelper.emit_to_master
+    def self.update_slave_server
+      settings = ClusterProxy::Slave.get_settings
+      raise 'Could not parse settings.yml' if settings.nil?
+
+      data = {
+        group_name: settings['application']['group_name'],
+        password: Env.instance['GROUP_PASSWORD'],
+        ip_addr: Env.instance['NODE_HOST'],
+        port: Env.instance['NODE_PORT'],
+        config: settings.to_json
+      }
+      data = data.merge(ClusterProxy::Slave.get_resource_usage)
+
+      url = build_url('/servers/update')
+      return nil if url.nil?
+
+      Utils::Http.send_put_request(url, data)
+    end
   end
 
+  # This module will be a remote proxy for a slave server.
+  # Methods here involve communication with a slave server.
   class Slave < Proxy
     def transfer(container_name, method, src_rel_path)
       url = get_slave_endpoint('transfer-files')
@@ -124,6 +164,41 @@ module ClusterProxy
         src_rel_path: src_rel_path
       })
     end
-  end
 
+    # Ping the slave server.
+    def self.ping
+      # TODO: Adapt ApplicationHelper.up? method here.
+    end
+
+    # Get the slave server settings which should include a list of available
+    # environments and other information.
+    def self.get_settings
+      settings_path = File.join(Rails.root, 'config', 'settings.yml')
+
+      begin
+        return YAML.load_file(settings_path)
+      rescue StandardError => err
+        Rails.logger.error 'Could not open settings.yml in config folder.'
+        return nil
+      end
+    end
+
+    # Get the current resource usage of the slave server machine.
+    def self.get_resource_usage
+      snapshot = Vmstat.snapshot
+      disk = Vmstat.disk('/')
+      cpu_idle = 0
+
+      for c in Vmstat.cpu
+        cpu_idle += c.idle
+      end
+
+      {
+        containers: Docker::Container.all.length - 1,
+        cpu: Math.sqrt(cpu_idle),
+        disk: disk.available_blocks * disk.block_size / 1_000_000,
+        memory: snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
+      }
+    end
+  end
 end
