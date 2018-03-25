@@ -22,14 +22,14 @@ namespace :admin do
     m.lock
 
     begin
-      container_table = AdminUtils::Containers.generate_table()
-      containers = AdminUtils::Containers.filter('term')
+      container_table = Utils::Containers.generate_table()
+      containers = Utils::Containers.filter('term')
       for c in containers
         name = c.info['Names'][0]
         next if not CDEDocker.check_alive(name)
         basename = CDEDocker::Utils.container_basename(name)
         
-        set = AdminUtils::Containers.filter_names(container_table[basename], 'env')
+        set = Utils::Containers.filter_names(container_table[basename], 'env')
         for name in set
           # Get top 5 proccesses with highest CPU usage
           stdout, stderr, status = CDEDocker.exec(
@@ -86,7 +86,7 @@ namespace :admin do
     m.lock
 
     begin
-      containers = AdminUtils::Containers.filter('env', 'term')
+      containers = Utils::Containers.filter('env', 'term')
       stopped = 0
       for c in containers
         break if stopped > 1
@@ -133,7 +133,7 @@ namespace :admin do
     m.lock
 
     begin
-      containers = AdminUtils::Containers.filter_exited('env', 'term')
+      containers = Utils::Containers.filter_exited('env', 'term')
       for c in containers
         name = c.info['Names'][0]
 
@@ -169,7 +169,7 @@ namespace :admin do
   task :start_fs => :environment do
     Rails.logger.debug "Starting fs containers at %s" % Time.now.to_s
 
-    containers = AdminUtils::Containers.filter_exited('fc', 'fs')
+    containers = Utils::Containers.filter_exited('fc', 'fs')
     for c in containers
       name = c.info['Names'][0]
 
@@ -193,7 +193,7 @@ namespace :admin do
     Rails.logger.debug "Garbage collecting fs containers at %s" % Time.now.to_s
 
     now = Time.now
-    containers = AdminUtils::Containers.filter('fc', 'fs')
+    containers = Utils::Containers.filter('fc', 'fs')
 
     max = containers.length / 3 + 1
     stopped = 0
@@ -239,7 +239,7 @@ namespace :admin do
   task :replicate => :environment do 
     Rails.logger.info "Initiating replication process..."
 
-    containers = AdminUtils::Containers.filter('fc')
+    containers = Utils::Containers.filter('fc')
     for c in containers
       container_name = c.info['Names'][0]
       stdout, stderr, status = CDEDocker.exec(['ls', '/tmp/__DIRTY__'], {}, container_name)

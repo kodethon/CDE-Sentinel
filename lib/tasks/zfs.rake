@@ -4,7 +4,7 @@ namespace :zfs do
   task :replicate_term_containers => :environment do
     Rails.logger.info "Replicating containers with terminal attached..."
 
-    containers = AdminUtils::Containers.filter_exited('term')
+    containers = Utils::Containers.filter_exited('term')
     for c in containers
       name = c.info['Names'][0]
       Utils::ZFS.replicate(name) 
