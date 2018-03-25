@@ -90,6 +90,13 @@ module Utils
 
   class ZFS
 
+    def self.create(name)
+      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      fs = ZFS(dataset)
+      return if fs.exist?
+      fs.create
+    end
+
     def self.replicate(name)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
       replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])

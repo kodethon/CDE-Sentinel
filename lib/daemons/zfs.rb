@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'bunny'
 require 'fileutils'
+require 'zfs'
 
 # You might want to change this
 ENV["RAILS_ENV"] ||= "development"
@@ -59,6 +60,12 @@ q.subscribe do |delivery_info, metadata, payload|
   replication_queue.push payload 
 end
 
+# On container create, create zfs dataset for container
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
+q.subscribe do |delivery_info, metadata, payload|
+  Utils::ZFS.create(payload)
+end
+
 $running = true
 Signal.trap("TERM") do 
   $running = false
@@ -69,6 +76,7 @@ while($running) do
   # Dequeue a container to replication
   if not replication_queue.empty?
     container_name = replication_queue.pop
+    Rails.logger.info "Replicating %s" % container_name
     stdout, stderr, status = Utils::ZFS.replicate(container_name)
   end
   sleep 10
