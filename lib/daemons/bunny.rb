@@ -52,11 +52,11 @@ q.subscribe do |delivery_info, metadata, payload|
   fp.close
 end
 
-# Replicate container
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:REPLICATE_CONTAINER], :auto_delete => true)
+# On container modified, add it to replication queue
+replication_queue = Queue.new
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 q.subscribe do |delivery_info, metadata, payload|
-  Rails.logger.info "Replicating %s" % payload
-  stdout, stderr, status = Utils::ZFS.replicate(payload)
+  replication_queue.push payload 
 end
 
 $running = true
@@ -66,5 +66,10 @@ Signal.trap("TERM") do
 end
 
 while($running) do
+  # Dequeue a container to replication
+  if not replication_queue.empty?
+    container_name = replication_queue.pop
+    stdout, stderr, status = Utils::ZFS.replicate(container_name)
+  end
   sleep 10
 end

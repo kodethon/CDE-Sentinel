@@ -21,7 +21,7 @@ class Constants
       :EVENTS => {
         :ADD_REPLICATION_HOSTS => 'replication_hosts.add',
         :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add',
-        :REPLICATE_CONTAINER => 'container.replicate'
+        :CONTAINER_MODIFIED => 'container.modified'
       }
     }
   end
