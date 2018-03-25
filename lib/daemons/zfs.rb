@@ -37,9 +37,9 @@ q.subscribe do |delivery_info, metadata, payload|
 end
 
 # Add replication hosts
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_REPLICATION_HOSTS], :auto_delete => true)
-q.subscribe do |delivery_info, metadata, payload|
-  Rails.logger.info "Received add replication hosts requests..."
+r = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_REPLICATION_HOSTS], :auto_delete => true)
+r.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Received add replication hosts request..."
 
   replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
   FileUtils.touch replication_hosts_path if not File.exists? replication_hosts_path
@@ -55,14 +55,15 @@ end
 
 # On container modified, add it to replication queue
 replication_queue = Queue.new
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
-q.subscribe do |delivery_info, metadata, payload|
+s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
+s.subscribe do |delivery_info, metadata, payload|
   replication_queue.push payload 
 end
 
 # On container create, create zfs dataset for container
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
-q.subscribe do |delivery_info, metadata, payload|
+t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
+t.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Creating dataset for container %s" % payload
   Utils::ZFS.create(payload)
 end
 

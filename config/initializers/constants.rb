@@ -3,7 +3,7 @@ class Constants
     return {
       :FC_ACCESS => 'fc.access',
       :ENV_ACCESS => 'env.access',
-      :LAST_ACCESS => '.modified'
+      :LAST_ACCESS => '.accessed'
     }
   end
 
