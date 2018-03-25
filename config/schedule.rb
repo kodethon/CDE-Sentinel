@@ -58,8 +58,8 @@ if is_slave
 end
 =end
 
-every 1.minute do 
-  rake "admin:zfs_replicate"
+every 5.minutes do 
+  rake "zfs:replicate_term_containers"
 end
 
 # Stop containers that have been idle for a long time

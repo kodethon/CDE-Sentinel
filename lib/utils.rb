@@ -101,7 +101,7 @@ module Utils
       hosts = replication_hosts.split("\n")
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
       hosts.each do |host|
-        command = '%s %s %s:%s' % [syncoid_path, dataset, host, dataset]
+        command = '%s --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, host, dataset]
         Rails.logger.info "Running command: %s" % command
         stdout, stderr, status = Open3.capture3(command)
 
