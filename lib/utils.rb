@@ -97,6 +97,7 @@ module Utils
       return nil if not fs.parent.exist?
       return fs if fs.exist?
       fs.create
+      FileUtils.chown('www-data', 'www-data', fs.mountpoint)
       return fs
     end
 
