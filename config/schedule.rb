@@ -40,24 +40,6 @@ if is_slave
     end
 end
 
-=begin
-if is_slave
-    # Start file sync containers for active containers
-    every 10.minutes do
-        rake "admin:start_fs"
-    end
-
-    # Disable file sync for idle containers
-    every 1.hour do
-        rake "admin:clean_fs"
-    end
-
-    every 5.minutes do 
-      rake "admin:replicate"
-    end
-end
-=end
-
 every 5.minutes do 
   rake "zfs:replicate_term_containers"
 end
