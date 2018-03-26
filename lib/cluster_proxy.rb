@@ -9,7 +9,8 @@ module ClusterProxy
         'update-disk-usage' => '/containers/update_disk_usage',
         'migrate-container' => '/servers/migrate',
         'backup-container' => '/servers/backup',
-        'transfer-files' => '/file/transfer'
+        'transfer-files' => '/file/transfer',
+        'register' => '/servers/create'
       }[action]
     end
 
@@ -24,7 +25,7 @@ module ClusterProxy
       return nil if ip_addr.nil? 
 
       url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
-      url += ':' + port if !port.nil? and port.length > 0
+      url += ':' + port.to_s if !port.nil? and port.to_s.length > 0
       url += ClusterProxy::PathFactory.get(action)
       return url
     end
@@ -36,7 +37,7 @@ module ClusterProxy
       return nil if ip_addr.nil? 
 
       url = (Env.instance['IS_PRODUCTION'] ? 'https' : 'http') + '://' + ip_addr 
-      url += ':' + port if !port.nil? and port.length > 0
+      url += ':' + port.to_s if !port.nil? and port.to_s.length > 0
       url += ClusterProxy::PathFactory.get(action)
       return url
     end
@@ -67,6 +68,16 @@ module ClusterProxy
       return send_post_request(url, data)
     end
 
+    # The second message sent from Node to Master in the Node Registration
+    # Protocol. 
+    # After Node authenticates Master, Node registers with Master.
+    # See README for details.
+    def register(payload)
+      url = get_master_endpoint('register')
+      # Each node will use a single group password for now.
+      # In the future, each node should have its own password.
+      send_post_request(url, payload)
+    end
 
     def announce(params)
       url = get_master_endpoint('announce')
