@@ -19,7 +19,7 @@ class Constants
   def self.rabbitmq
     return {
       :EVENTS => {
-        :ADD_REPLICATION_HOSTS => 'replication_hosts.add',
+        :ADD_REPLICATION_HOST => 'replication_host.add',
         :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add',
         :CONTAINER_MODIFIED => 'container.modified',
         :CONTAINER_CREATED => 'container.created'
