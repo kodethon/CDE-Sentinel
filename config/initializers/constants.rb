@@ -20,7 +20,7 @@ class Constants
     return {
       :EVENTS => {
         :ADD_REPLICATION_HOST => 'replication_host.add',
-        :ADD_ROOT_PUBLIC_KEY => 'root_public_key.add',
+        :ADD_ROOT_SSH_PUBLIC_KEY => 'root_ssh_public_key.add',
         :CONTAINER_MODIFIED => 'container.modified',
         :CONTAINER_CREATED => 'container.created'
       }

@@ -18,7 +18,7 @@ conn.start
 ch = conn.create_channel
 
 # Add root public key
-q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_PUBLIC_KEY], :auto_delete => true)
+q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_SSH_PUBLIC_KEY], :auto_delete => true)
 q.subscribe do |delivery_info, metadata, payload|
   authorized_keys = File.join('/root/.ssh/authorized_keys')
   Rails.logger.info '%s exists?' % authorized_keys
