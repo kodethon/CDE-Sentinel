@@ -12,4 +12,37 @@ namespace :zfs do
     end
   end # replicate_term_containers
 
+  desc "Send a ping request to replication hosts" 
+  task :check_replication_hosts => :environment do
+    replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
+    fp = File.open(replication_hosts_path, 'r+')
+    contents = fp.read
+    hosts = contents.split("\n")
+    down_list = []
+    hosts.each do |host|
+      begin
+        uri = URI.parse(host)
+      rescue URI::InvalidURIError => err
+        uri = URI.parse('//' + host)
+      end
+      if uri.host.nil?
+        Rails.logger.error 'Could not parse replication hosts file...'
+        break
+      end
+      begin
+        ClusterProxy::Proxy.ping(uri.host, uri.port)
+      rescue Errno::ECONNREFUSED => err 
+        down_list.push(host) 
+      end
+    end
+
+    if down_list.length > 0
+      res = ClusterProxy::Master.new.get_replication_hosts(down_list)
+      if !res.nil? && res.code == '200'
+        list = res.body
+        replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
+        File.write(replication_hosts_path, list)
+      end
+    end
+  end # check_replication_hosts
 end

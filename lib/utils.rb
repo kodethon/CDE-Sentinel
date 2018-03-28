@@ -58,17 +58,25 @@ module Utils
       return res
     end
 
-    def self.send_get_request(route, params)
-
+    def self.send_get_request(route, params, config = {})
       route += '?'
       params.each do |key, value|
-        route += (key.to_s + '=' + value.to_s + '&')
+        route += (key.to_s + '=' + URI.encode_www_form_component(value) + '&')
       end
       route = route[0, route.length - 1]
 
-      res = Net::HTTP.get_response(URI(route))
-      
-      return res
+      url = URI.parse(route)
+
+      http = Net::HTTP.new(url.host, url.port)
+      http.read_timeout = (config['read_timeout'].nil? ? 15 : config['read_timeout'])
+      http.open_timeout = (config['open_timeout'].nil? ? 5 : config['open_timeout'])
+      http.use_ssl = (url.scheme == 'https')
+
+      path = url.path
+      path = '/' if path.empty?
+      path += '?' + url.query unless url.query.nil?
+      res = http.request_get(path)
+      res
     end
 
     def self.send_put_request(route, params)
@@ -112,7 +120,12 @@ module Utils
       hosts = replication_hosts.split("\n")
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
       hosts.each do |host|
-        command = '%s --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, host, dataset]
+        begin
+          uri = URI.parse(host)
+        rescue URI::InvalidURIError => err
+          uri = URI.parse('//' + host) 
+        end
+        command = '%s --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
         Rails.logger.info "Running command: %s" % command
         stdout, stderr, status = Open3.capture3(command)
 

@@ -10,13 +10,25 @@ module ClusterProxy
         'migrate-container' => '/servers/migrate',
         'backup-container' => '/servers/backup',
         'transfer-files' => '/file/transfer',
-        'register' => '/servers/create'
+        'register' => '/servers/create',
+        'replication-hosts' => '/servers/replication_hosts'
       }[action]
     end
 
   end
 
   class Proxy
+
+    # Ping the slave server.
+    def self.ping(ip_addr, port)
+      protocol = 'http'
+      protocol = 'https' if port == 443
+
+      url = protocol + '://' + ip_addr
+      url += (':' + port.to_s) unless port.nil?
+      url += '/application/ping'
+      Utils::Http.send_get_request(url, {})
+    end
     
     def get_master_endpoint(action)
       ip_addr = Env.instance['MASTER_IP_ADDR']
@@ -54,6 +66,18 @@ module ClusterProxy
 
     end
 
+    def send_get_request(url, params)
+
+      begin
+        return Utils::Http.send_get_request(url, params)
+      rescue => err
+        Rails.logger.error url
+        Rails.logger.error err
+        return nil
+      end
+
+    end
+
   end
 
   # This module will be a remote proxy for a master server.
@@ -66,6 +90,19 @@ module ClusterProxy
       return nil if url.nil?
 
       return send_post_request(url, data)
+    end
+
+    def get_replication_hosts(down_list)
+      settings = ClusterProxy::Slave.get_settings
+      raise 'Could not parse settings.yml' if settings.nil?
+      url = get_master_endpoint('replication-hosts')
+      send_get_request(url, {
+        group_name: settings['application']['group_name'],
+        password: Env.instance['GROUP_PASSWORD'],
+        ip_addr: Env.instance['NODE_HOST'],
+        port: Env.instance['NODE_PORT'],
+        down_list: down_list.to_json
+      })
     end
 
     # The second message sent from Node to Master in the Node Registration
@@ -174,11 +211,6 @@ module ClusterProxy
         method: method,
         src_rel_path: src_rel_path
       })
-    end
-
-    # Ping the slave server.
-    def self.ping
-      # TODO: Adapt ApplicationHelper.up? method here.
     end
 
     # Get the slave server settings which should include a list of available

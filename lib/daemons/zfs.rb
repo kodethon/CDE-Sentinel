@@ -37,19 +37,16 @@ q.subscribe do |delivery_info, metadata, payload|
 end
 
 # Add replication hosts
-r = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_REPLICATION_HOST], :auto_delete => true)
+r = ch.queue(Constants.rabbitmq[:EVENTS][:SET_REPLICATION_HOSTS], :auto_delete => true)
 r.subscribe do |delivery_info, metadata, payload|
-  Rails.logger.info "Received add replication host request..."
+  Rails.logger.info "Received set replication host request..."
 
   replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])   
   FileUtils.touch replication_hosts_path if not File.exists? replication_hosts_path
   
-  fp = File.open(replication_hosts_path, 'a+')
-  contents = fp.read
-  if !contents.include? payload
-    Rails.logger.info "Writing data to %s: %s" % [payload, replication_hosts_path]
-    fp.write(payload + "\n") 
-  end
+  Rails.logger.info "Writing data to %s: %s" % [payload, replication_hosts_path]
+  fp = File.open(replication_hosts_path, 'w')
+  fp.write(payload) 
   fp.close
 end
 
