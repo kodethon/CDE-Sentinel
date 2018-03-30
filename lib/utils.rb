@@ -116,15 +116,12 @@ module Utils
         Rails.logger.error "%s does not exists..." % Constants.zfs[:REPLICATION_HOSTS_PATH]
         return
       end
+
       replication_hosts = File.read(replication_hosts_path)
       hosts = replication_hosts.split("\n")
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
       hosts.each do |host|
-        begin
-          uri = URI.parse(host)
-        rescue URI::InvalidURIError => err
-          uri = URI.parse('//' + host) 
-        end
+        uri = URI.parse('//' + host)
         command = '%s --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
         Rails.logger.info "Running command: %s" % command
         stdout, stderr, status = Open3.capture3(command)
