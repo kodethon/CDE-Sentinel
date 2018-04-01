@@ -2,6 +2,7 @@
 require 'bunny'
 require 'fileutils'
 require 'zfs'
+require 'open3'
 
 # You might want to change this
 ENV["RAILS_ENV"] ||= "development"
@@ -33,6 +34,9 @@ q.subscribe do |delivery_info, metadata, payload|
     Rails.logger.info "Appending %s" % authorized_keys
     fp.write payload
     fp.close
+    # Reload ssh configuration
+    stdout, stderr, status = Open3.capture3('service sshd reload')
+    Rails.logger.error stderr if status.exitstatus != 0
   end
 end
 

@@ -125,7 +125,7 @@ module Utils
         rescue URI::InvalidURIError => err
           uri = URI.parse('//' + host) 
         end
-        command = '%s --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
+        command = '%s -r --sshport 2249 %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
         Rails.logger.info "Running command: %s" % command
         stdout, stderr, status = Open3.capture3(command)
 
