@@ -104,6 +104,7 @@ module Utils
       fs = ZFS(dataset)
       return nil if not fs.parent.exist?
       return fs if fs.exist?
+      Rails.logger.error "Creating dataset: %s" % dataset
       fs.create
       FileUtils.chown('www-data', 'www-data', fs.mountpoint)
       return fs
