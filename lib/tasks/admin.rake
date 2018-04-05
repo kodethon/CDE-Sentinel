@@ -3,7 +3,7 @@ namespace :admin do
    # Get current resource usage for server.   
   def get_resource_usage
     snapshot = Vmstat.snapshot
-    disk = Vmstat.disk('/')
+    disk = Vmstat.disk(Env.instance['NODE_DRIVES'])
     cpu_idle = 0
 
     for c in Vmstat.cpu
