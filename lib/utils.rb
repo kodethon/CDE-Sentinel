@@ -104,8 +104,12 @@ module Utils
       fs = ZFS(dataset)
       return nil if not fs.parent.exist?
       return fs if fs.exist?
-      fs.create
-      FileUtils.chown('www-data', 'www-data', fs.mountpoint)
+      begin
+        fs.create
+        FileUtils.chown('www-data', 'www-data', fs.mountpoint)
+      rescue => err
+        return nil
+      end
       return fs
     end
 

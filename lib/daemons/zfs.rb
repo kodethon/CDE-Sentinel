@@ -65,7 +65,8 @@ end
 t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 t.subscribe do |delivery_info, metadata, payload|
   Rails.logger.info "Creating dataset for container %s" % payload
-  Utils::ZFS.create(payload)
+  fs = Utils::ZFS.create(payload)
+  Rails.logger.error "Failed to create dataset for container %s" % payload if fs.nil?
 end
 
 $running = true
