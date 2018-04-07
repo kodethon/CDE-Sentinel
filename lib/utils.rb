@@ -109,6 +109,7 @@ module Utils
         fs.create
         FileUtils.chown('www-data', 'www-data', fs.mountpoint)
       rescue => err
+        Rails.logger.error err
         return nil
       end
       return fs
