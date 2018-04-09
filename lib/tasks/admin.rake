@@ -3,18 +3,14 @@ namespace :admin do
    # Get current resource usage for server.   
   def get_resource_usage
     snapshot = Vmstat.snapshot
-    disk = Vmstat.disk('/')
-    cpu_idle = 0
-
-    for c in Vmstat.cpu
-      cpu_idle += c.idle
-    end
-
+    disk = Vmstat.disk(Env.instance['NODE_DRIVES'])
+    memory = snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
+    memory = 1 if memory < 1
     {
       containers: Docker::Container.all.length - 1,
-      cpu: Math.sqrt(cpu_idle),
+      cpu: snapshot.cpus.length / snapshot.load_average.five_minutes,
       disk: disk.available_blocks * disk.block_size / 1_000_000,
-      memory: snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
+      memory: Math.log(memory)
     }
   end
 

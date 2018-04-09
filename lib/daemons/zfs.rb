@@ -3,6 +3,7 @@ require 'bunny'
 require 'fileutils'
 require 'zfs'
 require 'open3'
+require 'set'
 
 # You might want to change this
 ENV["RAILS_ENV"] ||= "development"
@@ -55,17 +56,18 @@ r.subscribe do |delivery_info, metadata, payload|
 end
 
 # On container modified, add it to replication queue
-$replication_queue = Queue.new
+$replication_queue = Set.new
 s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 s.subscribe do |delivery_info, metadata, payload|
-  $replication_queue.push payload 
+  $replication_queue.add payload 
 end
 
 # On container create, create zfs dataset for container
 t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 t.subscribe do |delivery_info, metadata, payload|
   Rails.logger.info "Creating dataset for container %s" % payload
-  Utils::ZFS.create(payload)
+  fs = Utils::ZFS.create(payload)
+  Rails.logger.error "Failed to create dataset for container %s" % payload if fs.nil?
 end
 
 $running = true
@@ -77,9 +79,10 @@ end
 while($running) do
   # Dequeue a container to replication
   if not $replication_queue.empty?
-    container_name = $replication_queue.pop
+    container_name = $replication_queue.first
     Rails.logger.info "Replicating %s" % container_name
     stdout, stderr, status = Utils::ZFS.replicate(container_name)
+    $replication_queue.delete container_name
   end
   sleep 10
 end
