@@ -224,10 +224,10 @@ namespace :admin do
     end
   end
 
-  desc "Stop containers that have not been used accessed after 3 hours" 
+  desc "Stop containers that have not been accessed after 6 hours" 
   task :stop_containers => :environment do 
     Rails.logger.info "Garbage collecting environment containers..."
-    three_hours = 3 * 3600 
+    three_hours = 6 * 3600 
 
     m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
     next if m.locked?
