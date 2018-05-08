@@ -192,7 +192,8 @@ namespace :admin do
             columns = r.split()
 
             # If CPU usage is greater than some ammount
-            if columns[2].to_i > 15
+            cpu_percent = columns[2].to_i
+            if cpu_percent > 15
               stdout, stderr, status = CDEDocker.exec(
                   ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, name)
 
@@ -205,8 +206,8 @@ namespace :admin do
 
               Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
 
-              # Give the process 3 minutes of runtime
-              if active_time > 180
+              # Give the process 1 minute of runtime
+              if (active_time > 30 && cpu_percent > 50) || (active_time > 60 && cpu_percent > 25) || (active_time > 120 && cpu_percent > 15)
                   Rails.logger.info "Killing the process..."
                   #CDEDocker.stop(c) 
                   CDEDocker.exec(['kill', '-9', columns[1]], {}, name)
