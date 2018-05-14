@@ -40,7 +40,7 @@ if is_slave
     end
 end
 
-every 5.minutes do 
+every 10.minutes do 
   rake "zfs:replicate_term_containers"
 end
 

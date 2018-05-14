@@ -3,12 +3,24 @@ namespace :zfs do
   desc "Replicate zfs data set to neighbor nodes"
   task :replicate_term_containers => :environment do
     Rails.logger.info "Replicating containers with terminal attached..."
-
-    containers = Utils::Containers.filter('term')
-    for c in containers
-      name = c.info['Names'][0]
-      basename = CDEDocker::Utils.container_basename(name)
-      Utils::ZFS.replicate(basename) 
+    
+    # Lock access to term containers
+    m = Utils::Mutex.new(Constants.cache[:TERM_ACCESS], 1)
+    next if m.locked?
+    m.lock
+    
+    begin
+      containers = Utils::Containers.filter('term')
+      for c in containers
+        name = c.info['Names'][0]
+        basename = CDEDocker::Utils.container_basename(name)
+        Utils::ZFS.replicate(basename)
+        sleep 1
+      end
+    rescue => err
+      Rails.logger.error err
+    ensure
+      m.unlock
     end
   end # replicate_term_containers
 
