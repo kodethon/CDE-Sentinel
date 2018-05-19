@@ -59,6 +59,7 @@ end
 $replication_queue = Set.new
 s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 s.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Received replication request for container %s" % payload
   $replication_queue.add payload 
 end
 
