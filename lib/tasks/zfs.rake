@@ -15,7 +15,7 @@ namespace :zfs do
         name = c.info['Names'][0]
         basename = CDEDocker::Utils.container_basename(name)
         Utils::ZFS.replicate(basename)
-        sleep 1
+        sleep 10
       end
     rescue => err
       Rails.logger.error err
