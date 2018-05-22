@@ -161,8 +161,46 @@ namespace :admin do
     end
   end
 
-  desc "Monitor CPU intensive processes in active containers"
-  task :monitor_cpu_usage => :environment do
+  desc "Monitor CPU intensive processes in active term containers"
+  task :monitor_term_cpu_usage => :environment do 
+    super_key = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
+    length = super_key.length
+
+    # Get top highest CPU using processes
+    stdout, stderr, status = Open3.capture3('ps -eo pcpu,pid,time | sort -k1 -r -n | head -10')
+    rows = stdout.split("\n")
+    rows.each do |row|
+      columns = row.strip().split(' ')
+      cpu_percent = columns[0]
+
+      if cpu_percent.to_i > 15
+        pid = columns[1]
+        stdout, stderr, status = Open3.capture3('pstree -s ' + pid)
+        processes = stdout.split('---')
+        next if proccess.length < super_key.length
+
+        within_docker = true
+        super_key.each_with_index do |key, i|
+          if processes[i] != super_key[i]
+            within_docker = false
+            break
+          end
+        end
+
+        if within_docker
+          high_cpu = (active_time > 15 && cpu_percent > 50)
+          medium_cpu = (active_time > 30 && cpu_percent > 25)
+          low_cpu = (active_time > 60 && cpu_percent > 15)
+          if high_cpu || medium_cpu || low_cpu 
+            Open3.capture3('kill -9 ' + pid)
+          end
+        end
+      end # if precent > 15
+    end
+  end
+
+  desc "Monitor CPU intensive processes in active env containers"
+  task :monitor_env_cpu_usage => :environment do
     Rails.logger.info "Checking CPU intensive processes in containers..." 
 
     m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
@@ -227,6 +265,11 @@ namespace :admin do
 
   desc "Stop containers that have not been accessed after 6 hours" 
   task :stop_containers => :environment do 
+    load_average = Vmstat.load_average
+    next if load_average.one_minute > 1
+    target = 3 # How many containers to stop
+    target = 1 if load_average.five_minutes > 1
+
     Rails.logger.info "Garbage collecting environment containers..."
     three_hours = 6 * 3600 
 
@@ -239,7 +282,7 @@ namespace :admin do
       containers = Utils::Containers.filter('env', 'term')
       stopped = 0
       for c in containers
-        break if stopped > 1
+        break if stopped > target
         name = c.info['Names'][0]
 
         # Check if user has been non-idle for last hour
