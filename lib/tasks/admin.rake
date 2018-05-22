@@ -167,17 +167,20 @@ namespace :admin do
     length = super_key.length
 
     # Get top highest CPU using processes
-    stdout, stderr, status = Open3.capture3('ps -eo pcpu,pid,time,command,args | sort -k1 -r -n | head -10')
+    stdout, stderr, status = Open3.capture3('ps -eo pcpu,user,pid,time,command | sort -k1 -r -n | head -10')
     rows = stdout.split("\n")
     rows.each do |row|
       columns = row.strip().split(' ')
+      user = columns[1]
+
+      next if row == 'netdata'
       cpu_percent = columns[0]
 
       if cpu_percent.to_i > 15
-        pid = columns[1]
+        pid = columns[2]
         stdout, stderr, status = Open3.capture3('pstree -s ' + pid)
         processes = stdout.split('---')
-        next if proccess.length < super_key.length
+        next if processes.length < super_key.length
         
         # Try to determine if the process is within a container
         within_docker = true
@@ -190,13 +193,15 @@ namespace :admin do
           
         # If it is within a container, check if it has abnormal CPU usage
         if within_docker
-          active_time = columns[2]
+          active_time = columns[3]
           high_cpu = (active_time > 15 && cpu_percent > 50)
           medium_cpu = (active_time > 30 && cpu_percent > 25)
           low_cpu = (active_time > 60 && cpu_percent > 15)
           if high_cpu || medium_cpu || low_cpu 
             Rails.logger.info "Abnormal CPU usage process found, killing..."
-            Rails.logger.info row
+            Rails.logger.info row.join(' ')
+            puts "Abnormal CPU usage process found, killing..."
+            puts row.join(' ')
             Open3.capture3('kill -9 ' + pid)
           end
         end
