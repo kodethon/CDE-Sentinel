@@ -163,8 +163,11 @@ namespace :admin do
 
   desc "Monitor CPU intensive processes in active term containers"
   task :monitor_term_cpu_usage => :environment do 
-    super_key = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
-    length = super_key.length
+    super_key1 = ['systemd', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
+    super_key2 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
+
+    length1 = super_key1.length
+    length2 = super_key2.length
 
     # Get top highest CPU using processes
     stdout, stderr, status = Open3.capture3('ps -eo pcpu,user,pid,time,command | sort -k1 -r -n | head -10')
@@ -180,14 +183,25 @@ namespace :admin do
         pid = columns[2]
         stdout, stderr, status = Open3.capture3('pstree -s ' + pid)
         processes = stdout.split('---')
-        next if processes.length < super_key.length
+        next if processes.length < super_key1.length
         
         # Try to determine if the process is within a container
         within_docker = true
-        super_key.each_with_index do |key, i|
-          if processes[i] != super_key[i]
+        super_key1.each_with_index do |key, i|
+          if processes[i] != super_key1[i]
             within_docker = false
             break
+          end
+        end
+        
+        if !within_docker
+          within_docker = true
+          next if processes.length < super_key2.length
+          super_key2.each_with_index do |key, i|
+            if processes[i] != super_key2[i]
+              within_docker = false
+              break
+            end
           end
         end
           
