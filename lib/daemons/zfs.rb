@@ -78,7 +78,7 @@ end
 $running = true
 Signal.trap("TERM") do 
   $running = false
-  conn.close
+  conn.close if not conn.nil?
 end
 
 while($running) do
