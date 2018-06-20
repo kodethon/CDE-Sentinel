@@ -14,14 +14,29 @@ Signal.trap("TERM") do
   $running = false
 end
 
+def within_docker?(processes, *keys)
+  within_docker = false
+  processes_len = processes.length
+  for key in keys 
+    next if processes_len < key.length
+    within_docker = true
+    key.each_with_index do |process, i|
+      if processes[i] != key[i]
+        within_docker = false
+        break
+      end
+    end
+    break if within_docker
+  end
+  within_docker
+end
+
 while($running) do
   Rails.logger.info 'Checking proccess...'
 
   super_key1 = ['systemd', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
   super_key2 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
-
-  length1 = super_key1.length
-  length2 = super_key2.length
+  super_key3 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sh', 'timeout']
 
   # Get top highest CPU using processes
   stdout, stderr, status = Open3.capture3('ps -eo pcpu,user,pid,etimes,command | sort -k1 -r -n | head -10')
@@ -29,38 +44,21 @@ while($running) do
   rows.each do |row|
     columns = row.strip().split(' ')
     user = columns[1]
-
-    next if row == 'netdata'
+    next if user == 'netdata'
     cpu_percent = columns[0].to_i
 
     if cpu_percent > 15
       pid = columns[2]
       stdout, stderr, status = Open3.capture3('pstree -s ' + pid)
       processes = stdout.split('---')
-      next if processes.length < super_key1.length
-      
+
       # Try to determine if the process is within a container
-      within_docker = true
-      super_key1.each_with_index do |key, i|
-        if processes[i] != super_key1[i]
-          within_docker = false
-          break
-        end
-      end
-      
-      if !within_docker
-        within_docker = true
-        next if processes.length < super_key2.length
-        super_key2.each_with_index do |key, i|
-          if processes[i] != super_key2[i]
-            within_docker = false
-            break
-          end
-        end
-      end
+      within_docker = within_docker?(processes, super_key1, super_key2, super_key3) 
         
       # If it is within a container, check if it has abnormal CPU usage
       if within_docker
+        Rails.logger.info 'Abnormal process within docker container found...'
+
         active_time = columns[3].to_i
         high_cpu = (active_time >= 15 && cpu_percent > 50)
         medium_cpu = (active_time >= 30 && cpu_percent > 25)
