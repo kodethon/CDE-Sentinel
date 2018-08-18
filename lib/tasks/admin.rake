@@ -161,8 +161,13 @@ namespace :admin do
     end
   end
 
-  desc "Monitor CPU intensive processes in active containers"
-  task :monitor_cpu_usage => :environment do
+  desc "Monitor IO intensive processes in active term containers"
+  task :monitor_term_io_usage => :environment do 
+    stdout, stderr, status = Open3.capture3('sudo timeout 1s nice -20 iotop -boP')  
+  end
+
+  desc "Monitor CPU intensive processes in active env containers"
+  task :monitor_env_cpu_usage => :environment do
     Rails.logger.info "Checking CPU intensive processes in containers..." 
 
     m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
@@ -192,7 +197,8 @@ namespace :admin do
             columns = r.split()
 
             # If CPU usage is greater than some ammount
-            if columns[2].to_i > 15
+            cpu_percent = columns[2].to_i
+            if cpu_percent > 15
               stdout, stderr, status = CDEDocker.exec(
                   ['sh', '-c', "ps -p %s -o etimes=" % columns[1]], {}, name)
 
@@ -205,8 +211,8 @@ namespace :admin do
 
               Rails.logger.info "%s has been running for %s seconds." % [columns.join(' '), active_time]
 
-              # Give the process 3 minutes of runtime
-              if active_time > 180
+              # Give the process 1 minute of runtime
+              if (active_time > 30 && cpu_percent > 50) || (active_time > 60 && cpu_percent > 25) || (active_time > 120 && cpu_percent > 15)
                   Rails.logger.info "Killing the process..."
                   #CDEDocker.stop(c) 
                   CDEDocker.exec(['kill', '-9', columns[1]], {}, name)
@@ -224,10 +230,15 @@ namespace :admin do
     end
   end
 
-  desc "Stop containers that have not been used accessed after 3 hours" 
+  desc "Stop containers that have not been accessed after 6 hours" 
   task :stop_containers => :environment do 
+    load_average = Vmstat.load_average
+    next if load_average.one_minute > 1
+    target = 3 # How many containers to stop
+    target = 1 if load_average.five_minutes > 1
+
     Rails.logger.info "Garbage collecting environment containers..."
-    three_hours = 3 * 3600 
+    three_hours = 6 * 3600 
 
     m = Utils::Mutex.new(Constants.cache[:ENV_ACCESS], 1)
     next if m.locked?
@@ -238,7 +249,7 @@ namespace :admin do
       containers = Utils::Containers.filter('env', 'term')
       stopped = 0
       for c in containers
-        break if stopped > 1
+        break if stopped > target
         name = c.info['Names'][0]
 
         # Check if user has been non-idle for last hour

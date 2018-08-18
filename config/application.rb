@@ -35,7 +35,7 @@ module CdeBackup
       command = "cd %s && git clone %s" % [vendor_path, 'https://github.com/jimsalterjrs/sanoid.git']
       stdout, stderr, status = Open3.capture3(command)
       if status.exitstatus == 0
-        puts "Please installing sanoid dependencies with: 'apt-get install -y pv lzop'" 
+        puts "Please install sanoid dependencies with: 'apt-get install -y pv lzop'" 
       else
         puts "Could not clone sanoid repository from'https://github.com/jimsalterjrs/sanoid.git'"
       end

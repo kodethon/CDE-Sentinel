@@ -59,6 +59,7 @@ end
 $replication_queue = Set.new
 s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 s.subscribe do |delivery_info, metadata, payload|
+  Rails.logger.info "Received replication request for container %s" % payload
   $replication_queue.add payload 
 end
 
@@ -66,14 +67,18 @@ end
 t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 t.subscribe do |delivery_info, metadata, payload|
   Rails.logger.info "Creating dataset for container %s" % payload
-  fs = Utils::ZFS.create(payload)
-  Rails.logger.error "Failed to create dataset for container %s" % payload if fs.nil?
+  begin
+    fs = Utils::ZFS.create(payload)
+    Rails.logger.error "Failed to create dataset for container %s" % payload if fs.nil?
+  rescue => err
+    Rails.logger.error err
+  end
 end
 
 $running = true
 Signal.trap("TERM") do 
   $running = false
-  conn.close
+  conn.close if not conn.nil?
 end
 
 while($running) do
@@ -81,7 +86,11 @@ while($running) do
   if not $replication_queue.empty?
     container_name = $replication_queue.first
     Rails.logger.info "Replicating %s" % container_name
-    stdout, stderr, status = Utils::ZFS.replicate(container_name)
+    begin
+      Utils::ZFS.replicate(container_name)
+    rescue => err
+      Rails.logger.error err
+    end
     $replication_queue.delete container_name
   end
   sleep 10
