@@ -231,12 +231,11 @@ module ClusterProxy
       snapshot = Vmstat.snapshot
       disk = Vmstat.disk(Env.instance['NODE_DRIVES'])
       memory = snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
-      memory = 1 if memory < 1
       {
         containers: Docker::Container.all.length - 1,
-        cpu: snapshot.cpus.length / (snapshot.load_average.five_minutes + 0.5),
+        cpu: snapshot.cpus.length / (snapshot.load_average.five_minutes + 0.1),
         disk: disk.available_blocks * disk.block_size / 1_000_000,
-        memory: Math.log(memory)
+        memory: memory
       }
     end
   end

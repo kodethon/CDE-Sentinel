@@ -1,19 +1,5 @@
 namespace :admin do
 
-   # Get current resource usage for server.   
-  def get_resource_usage
-    snapshot = Vmstat.snapshot
-    disk = Vmstat.disk(Env.instance['NODE_DRIVES'])
-    memory = snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
-    memory = 1 if memory < 1
-    {
-      containers: Docker::Container.all.length - 1,
-      cpu: snapshot.cpus.length / snapshot.load_average.five_minutes,
-      disk: disk.available_blocks * disk.block_size / 1_000_000,
-      memory: Math.log(memory)
-    }
-  end
-
   # The settings.yml file contains information about the Master.
   def parse_settings
     settings = nil
@@ -87,7 +73,7 @@ namespace :admin do
       port: Env.instance['NODE_PORT'],
       master_password: Env.instance['MASTER_PASSWORD'],
       root_public_key: root_public_key
-    }.merge(get_resource_usage)
+    }.merge(ClusterProxy::Slave.get_resource_usage)
   end
 
   # Check that the Node and Master passwords are set.
