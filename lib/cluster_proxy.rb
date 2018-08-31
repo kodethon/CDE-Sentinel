@@ -195,7 +195,7 @@ module ClusterProxy
       url = build_url('/servers/update')
       return nil if url.nil?
 
-      Utils::Http.send_put_request(url, data)
+      Utils::Http.send_post_request(url, data)
     end
   end
 
