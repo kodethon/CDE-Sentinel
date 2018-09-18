@@ -1,14 +1,14 @@
-== Description
+## Description
 
 This service is meant to accompany a Kodethon node.
 
-== Setup
+## Setup
 
 ```
 bundle install
 ```
 
-== Usage
+## Usage
 
 Sets up a cron job to stop and remove non-used containers.
 ```
