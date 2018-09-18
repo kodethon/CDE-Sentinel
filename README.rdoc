@@ -1,13 +1,27 @@
-== Sentinel
+== Description
 
-This is a set of tasks that checks the state and health of the nodes and file system clients.
+This service is meant to accompany a Kodethon node.
 
-There is one sentinel per slave server that checks the status of the cde-node servers and the file system clients.
+== Setup
 
-== Development
+```
+bundle install
+```
 
-When you start a development cluster using **start-cluster-dev.sh**, it also starts a sentinel container.
+== Usage
 
-You can attack to the sentinel container to run some of the commands.
+Sets up a cron job to stop and remove non-used containers.
+```
+whenever -w
+sudo service cron restart
+```
 
-For example, you can run `rake admin:check_app`.  But you must set `export NO_HTTPS=true`.
+Enables listening to replication requests broadcasted via RabbitMQ.
+```
+sudo bundle exec rake daemon:zfs:start
+```
+
+Detects and kills excessive CPU usage processes within docker containers.
+```
+sudo bundle exec rake daemon:monitor:start
+```
