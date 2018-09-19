@@ -220,7 +220,7 @@ namespace :admin do
   task :stop_containers => :environment do 
     load_average = Vmstat.load_average
     next if load_average.one_minute > 1
-    target = 3 # How many containers to stop
+    target = 5 # How many containers to stop
     target = 1 if load_average.five_minutes > 1
 
     Rails.logger.info "Garbage collecting environment containers..."
@@ -232,7 +232,7 @@ namespace :admin do
     m.lock
 
     begin
-      containers = Utils::Containers.filter('env', 'term')
+      containers = Utils::Containers.filter('env')
       stopped = 0
       for c in containers
         break if stopped > target
@@ -250,7 +250,14 @@ namespace :admin do
         else
           if now - last_updated > three_hours
             Rails.logger.info "Stopping container %s..." % name
-            CDEDocker.kill(name) 
+            CDEDocker.kill(name)
+
+            # Try killing term container as well
+            term_name = "%s-term" % basename
+            if CDEDocker.check_alive(term_name) 
+              Rails.logger.info "Stopping container %s..." % term_name
+              CDEDocker.kill(term_name) 
+            end
 
             #Rails.cache.delete(key)
             stopped += 1 # Update number of stopped containers
