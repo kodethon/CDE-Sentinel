@@ -62,9 +62,9 @@ while($running) do
         Rails.logger.info 'Abnormal process within docker container found...'
 
         active_time = columns[3].to_i
-        high_cpu = (active_time >= 15 && cpu_percent > 50)
-        medium_cpu = (active_time >= 30 && cpu_percent > 25)
-        low_cpu = (active_time >= 60 && cpu_percent > 15)
+        high_cpu = (active_time >= 15 && cpu_percent > 75)
+        medium_cpu = (active_time >= 30 && cpu_percent > 30)
+        low_cpu = (active_time >= 75 && cpu_percent > 15)
         if high_cpu || medium_cpu || low_cpu 
           Rails.logger.info "Abnormal CPU usage process found, killing..."
           Rails.logger.info columns.join(' ')
