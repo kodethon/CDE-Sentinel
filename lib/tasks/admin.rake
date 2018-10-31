@@ -17,10 +17,28 @@ namespace :admin do
   # 5. Master verifies Node's password.
   # 6. If verification succeeds, Master adds Node info to servers table.
   def register(register_payload)
-    puts 'Sending REGISTER message.'
+    Rails.logger.info 'Sending REGISTER message...'
     res = ClusterProxy::Master.new.register(register_payload)
-    puts 'Received response from Master.'
-    return res
+    Rails.logger.info 'Received response from Master...'
+    return if not ApplicationHelper.res_success?(res)
+
+    # Add returned public keys to authorized keys
+    public_key_path = '/root/.ssh/authorized_keys'
+    keys = res.body.split("\n")
+    contents = File.read(public_key_path)
+    hosts = []
+    for key in keys
+      toks = key.split(' ')
+      host = toks[2]
+      if !hosts.include?(host) && !contents.include?(host)
+        Rails.logger.info "Adding %s root public key..." % host
+        fp = File.open(public_key_path, 'a')
+        fp.write(key)
+        fp.close()
+      end
+      hosts.append(host)
+    end
+    res
   end
 
   # Get the node's public key.
