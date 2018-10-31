@@ -137,6 +137,18 @@ module Utils
       end
     end
 
+    def self.replicate_to(name, host)
+      syncoid_path = Constants.zfs[:SYNCOID_PATH]
+      uri = URI.parse('//' + host)
+      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      command = 'ionice -c 3 %s -r --sshport 2249 --source-bwlimit=1M --target-bwlimit=1M %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
+      Rails.logger.info "Running command: %s" % command
+      stdout, stderr, status = Open3.capture3(command)
+
+      Rails.logger.debug stdout
+      Rails.logger.debug stderr
+    end
+
   end # ZFS
 
   class Containers

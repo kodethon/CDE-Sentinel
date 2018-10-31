@@ -75,6 +75,16 @@ t.subscribe do |delivery_info, metadata, payload|
   end
 end
 
+# On container replicate, add it to replication queue
+s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_REPLICATE], :auto_delete => true)
+s.subscribe do |delivery_info, metadata, payload|
+  toks = payload.split('#')
+  container_name = toks[0]
+  host = toks[1]
+  Rails.logger.info "Received replication request for container %s to %s" % [container_name, host]
+  Utils::ZFS.replicate_to(container_name, host)
+end
+
 $running = true
 Signal.trap("TERM") do 
   $running = false
