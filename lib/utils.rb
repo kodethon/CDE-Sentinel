@@ -149,6 +149,26 @@ module Utils
       Rails.logger.debug stderr
     end
 
+    def self.size(name)
+      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      command = "zfs list %s | awk '{print $4}'" % dataset
+      stdout, stderr, status = Open3.capture3(command)
+      Rails.logger.info stderr
+      return -1 if stderr.length > 0
+      toks = stdout.split("\n")
+      size_str = toks[1]
+      case size_str[-1]
+        when 'K'
+          return size_str.to_i * 1000
+        when 'M'
+          return size_str.to_i * 1000000
+        when 'G'
+          return size_str.to_i * 1000000000
+        else
+          return size_str.to_i
+        end
+    end
+
   end # ZFS
 
   class Containers

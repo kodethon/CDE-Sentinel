@@ -4,7 +4,8 @@ class Constants
       :FC_ACCESS => 'fc.access',
       :ENV_ACCESS => 'env.access',
       :LAST_ACCESS => '.accessed',
-      :TERM_ACCESS => 'term.access'
+      :TERM_ACCESS => 'term.access',
+      :CONTAINER_SIZE => '.size'
     }
   end
 
@@ -24,7 +25,8 @@ class Constants
         :ADD_ROOT_SSH_PUBLIC_KEY => 'root_ssh_public_key.add',
         :CONTAINER_MODIFIED => 'container.modified',
         :CONTAINER_CREATED => 'container.created',
-        :CONTAINER_REPLICATE => 'container.replicate'
+        :CONTAINER_REPLICATE => 'container.replicate',
+        :CONTAINER_SIZE => 'container.size',
       }
     }
   end

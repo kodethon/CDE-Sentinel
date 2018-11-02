@@ -85,6 +85,17 @@ s.subscribe do |delivery_info, metadata, payload|
   Utils::ZFS.replicate_to(container_name, host)
 end
 
+# On container size, write size to cache
+s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_SIZE], :auto_delete => true)
+s.subscribe do |delivery_info, metadata, payload|
+  toks = payload.split('#')
+  container_name = toks[0]
+  host = toks[1]
+  Rails.logger.info "Received request for container %s size..." % [container_name, host]
+  size = Utils::ZFS.size(container_name)
+  Rails.cache.write(container_name + Constants.cache[:CONTAINER_SIZE], size)
+end
+
 $running = true
 Signal.trap("TERM") do 
   $running = false
