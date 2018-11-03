@@ -37,7 +37,8 @@ while($running) do
   super_key1 = ['systemd', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
   super_key2 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sshd', 'sshd', 'sshd', 'bash']
   super_key3 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh', 'sh', 'timeout']
-  super_key4 = ['systemd', 'timeout']
+  #super_key4 = ['systemd', 'timeout']
+  super_key4 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh']
   super_key5 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'timeout']
 
   # Get top highest CPU using processes
