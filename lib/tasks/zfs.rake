@@ -1,5 +1,27 @@
 namespace :zfs do
 
+  desc "Replicate priority containers set to backup"
+  task :replicate_priority_containers => :environment do
+    Rails.logger.info "Replicating priority containers to backup..."
+    
+    begin
+      containers_list_path = File.join(Rails.root.to_s, Constants.zfs[:BACKUP_LIST_PATH])
+      return if not File.exists? containers_list_path
+      contents = File.read(containers_list_path)
+      containers_list = contents.split("\n")
+
+      host = Env.instance['BACKUP_HOST']
+      return if host.nil? or host.empty?
+
+      for basename in containers_list
+        Utils::ZFS.replicate_to(basename, host)
+        sleep 5
+      end
+    rescue => err
+      Rails.logger.error err
+    end
+  end # replicate priority containers
+
   desc "Replicate zfs data set to neighbor nodes"
   task :replicate_term_containers => :environment do
     Rails.logger.info "Replicating containers with terminal attached..."

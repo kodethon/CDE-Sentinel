@@ -14,7 +14,8 @@ class Constants
       :DRIVES_DATASET => 'kodethon/production/drives',
       :SYSTEM_DATASET => 'kodethon/production/system',
       :REPLICATION_HOSTS_PATH => 'config/replication_hosts.txt',
-      :SYNCOID_PATH => Rails.root.join('vendor', 'sanoid', 'syncoid')
+      :SYNCOID_PATH => Rails.root.join('vendor', 'sanoid', 'syncoid'),
+      :BACKUP_LIST_PATH => 'config/backup_list.txt'
     }
   end
 

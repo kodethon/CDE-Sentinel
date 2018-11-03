@@ -33,17 +33,20 @@ every 5.minutes do
 end
 
 # Check active term containers for proper CPU usage
-=begin
 if is_slave
-    every 1.minute do 
-        rake "admin:monitor_term_cpu_usage"
-    end
-end
+=begin
+  every 1.minute do 
+      rake "admin:monitor_term_cpu_usage"
+  end
 
-every 10.minutes do 
-  rake "zfs:replicate_term_containers"
-end
+  every 10.minutes do 
+    rake "zfs:replicate_term_containers"
+  end
 =end
+  every 10.minutes do
+    rake "zfs:replicate_priority_containers"
+  end
+end
 
 # Stop containers that have been idle for a long time
 every 30.minutes do
