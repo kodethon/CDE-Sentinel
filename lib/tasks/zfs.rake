@@ -4,6 +4,11 @@ namespace :zfs do
   task :replicate_priority_containers => :environment do
     Rails.logger.info "Replicating priority containers to backup..."
     
+    # Lock access to term containers
+    m = Utils::Mutex.new(Constants.cache[:BACKUP_ACCESS], 1)
+    next if m.locked?
+    m.lock
+
     begin
       containers_list_path = File.join(Rails.root.to_s, Constants.zfs[:BACKUP_LIST_PATH])
       return if not File.exists? containers_list_path
@@ -19,6 +24,8 @@ namespace :zfs do
       end
     rescue => err
       Rails.logger.error err
+    ensure
+      m.unlock
     end
   end # replicate priority containers
 
