@@ -19,7 +19,7 @@ namespace :zfs do
       return if host.nil? or host.empty?
 
       for basename in containers_list
-        Utils::ZFS.replicate_to(basename, host)
+        Utils::ZFS.replicate_to(basename, host, use_sudo: true)
         sleep 5
       end
     rescue => err

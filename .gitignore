@@ -23,6 +23,7 @@
 config/settings.yml
 config/env.yml
 config/replication_hosts.txt
+config/backup_list.txt
 
 vendor/bundle/*
 vendor/sanoid
