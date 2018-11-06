@@ -137,8 +137,9 @@ module Utils
       end
     end
 
-    def self.replicate_to(name, host)
+    def self.replicate_to(name, host, **config)
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
+      syncoid_path = 'sudo ' + syncoid_path.to_s if config[:use_sudo]
       uri = URI.parse('//' + host)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
       command = 'ionice -c 3 %s -r --sshport 2249 --source-bwlimit=100K --target-bwlimit=100K %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
