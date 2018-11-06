@@ -11,12 +11,12 @@ namespace :zfs do
 
     begin
       containers_list_path = File.join(Rails.root.to_s, Constants.zfs[:BACKUP_LIST_PATH])
-      return if not File.exists? containers_list_path
+      next if not File.exists? containers_list_path
       contents = File.read(containers_list_path)
       containers_list = contents.split("\n")
 
       host = Env.instance['BACKUP_HOST']
-      return if host.nil? or host.empty?
+      next if host.nil? or host.empty?
 
       for basename in containers_list
         Utils::ZFS.replicate_to(basename, host)
