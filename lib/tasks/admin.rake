@@ -237,9 +237,8 @@ namespace :admin do
   desc "Stop containers that have not been accessed after 6 hours" 
   task :stop_containers => :environment do 
     load_average = Vmstat.load_average
-    next if load_average.one_minute > 1
     target = 5 # How many containers to stop
-    target = 1 if load_average.five_minutes > 1
+    target = 1 if load_average.one_minute > 4
 
     Rails.logger.info "Garbage collecting environment containers..."
     three_hours = 6 * 3600 
