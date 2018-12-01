@@ -139,7 +139,7 @@ namespace :admin do
     unless register_payload.nil?
       response = register(register_payload)
       # Response should not have a payload.  Only the status matters.
-      raise res.body if !ApplicationHelper.res_success?(response)
+      raise response.body if !ApplicationHelper.res_success?(response)
       case response
       when Net::HTTPSuccess
         puts "SUCCESS: Node registered."
