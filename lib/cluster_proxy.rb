@@ -97,7 +97,7 @@ module ClusterProxy
       raise 'Could not parse settings.yml' if settings.nil?
       url = get_master_endpoint('replication-hosts')
       send_get_request(url, {
-        group_name: settings['application']['group_name'],
+        group_name: Env.instance['GROUP_NAME'],
         password: Env.instance['GROUP_PASSWORD'],
         ip_addr: Env.instance['NODE_HOST'],
         port: Env.instance['NODE_PORT'],

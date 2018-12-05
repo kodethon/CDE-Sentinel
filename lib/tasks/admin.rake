@@ -77,7 +77,8 @@ namespace :admin do
   # Returns a hash or nil.
   def build_register_payload(settings)
     puts 'Building REGISTER payload.'
-    group_name = settings['application']['group_name']
+ 
+    group_name = Env.instance['GROUP_NAME']
     public_key = get_public_key
     root_public_key = get_root_public_key
     return if  public_key.nil? || root_public_key.nil?
