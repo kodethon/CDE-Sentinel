@@ -230,7 +230,7 @@ module ClusterProxy
     def self.get_resource_usage
       snapshot = Vmstat.snapshot
       disk = Vmstat.disk(Env.instance['NODE_DRIVES'])
-      memory = snapshot.memory.free * snapshot.memory.pagesize / 1_000_000
+      memory = snapshot.memory.inactive * snapshot.memory.pagesize / 1_000_000
       {
         containers: Docker::Container.all.length - 1,
         cpu: snapshot.cpus.length / (snapshot.load_average.five_minutes + 0.1),
