@@ -21,7 +21,7 @@ ch = conn.create_channel
 
 begin
 	# Add root public key
-	q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_SSH_PUBLIC_KEY], :auto_delete => false)
+	q  = ch.queue(Constants.rabbitmq[:EVENTS][:ADD_ROOT_SSH_PUBLIC_KEY], :auto_delete => true)
 	q.subscribe do |delivery_info, metadata, payload|
 		authorized_keys = File.join('/root/.ssh/authorized_keys')
 		Rails.logger.info '%s exists?' % authorized_keys
@@ -43,7 +43,7 @@ begin
 	end
 
 	# Add replication hosts
-	r = ch.queue(Constants.rabbitmq[:EVENTS][:SET_REPLICATION_HOSTS], :auto_delete => false)
+	r = ch.queue(Constants.rabbitmq[:EVENTS][:SET_REPLICATION_HOSTS], :auto_delete => true)
 	r.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Received set replication host request..."
 
@@ -58,14 +58,14 @@ begin
 
 	# On container modified, add it to replication queue
 	$replication_queue = Set.new
-	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => false)
+	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
 	s.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Received replication request for container %s" % payload
 		$replication_queue.add payload 
 	end
 
 	# On container create, create zfs dataset for container
-	t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => false)
+	t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 	t.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Creating dataset for container %s" % payload
 		begin
@@ -77,7 +77,7 @@ begin
 	end
 
 	# On container replicate, add it to replication queue
-	u  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_REPLICATE], :auto_delete => false)
+	u  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_REPLICATE], :auto_delete => true)
 	u.subscribe do |delivery_info, metadata, payload|
 		toks = payload.split('#')
 		container_name = toks[0]
@@ -87,7 +87,7 @@ begin
 	end
 
 	# On container size, write size to cache
-	v  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_SIZE], :auto_delete => false)
+	v  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_SIZE], :auto_delete => true)
 	v.subscribe do |delivery_info, metadata, payload|
 		toks = payload.split('#')
 		container_name = toks[0]
@@ -99,12 +99,13 @@ begin
 
 	# On container backup, add it to replication queue
 	$backup_queue = Set.new
-	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_BACKUP], :auto_delete => false)
+	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_BACKUP], :auto_delete => true)
 	s.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Received backup request for container %s" % payload
 		$backup_queue.add payload if not Env.instance['BACKUP_HOST'].nil?
 	end
 rescue IO::EAGAINWaitReadable => err
+	Rails.logger.error 'Critical error found...'
 	Rails.logger.error err
 end
 

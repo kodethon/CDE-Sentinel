@@ -26,6 +26,7 @@ class Constants
         :SET_REPLICATION_HOSTS => 'replication_hosts.set',
         :ADD_ROOT_SSH_PUBLIC_KEY => 'root_ssh_public_key.add',
         :CONTAINER_MODIFIED => 'container.modified',
+        :CONTAINER_BACKUP => 'container.backup',
         :CONTAINER_CREATED => 'container.created',
         :CONTAINER_REPLICATE => 'container.replicate',
         :CONTAINER_SIZE => 'container.size',

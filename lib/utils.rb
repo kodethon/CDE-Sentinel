@@ -117,15 +117,22 @@ module Utils
 
     def self.replicate(name)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      lock_path = File.join('/', 'home', dataset, 'replicate.lock')
+ 	  if File.exists? lock_path
+        Rails.logger.error "%s exists..." % lock_path
+      	return
+      end
+		
       replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])
       if not File.exists? replication_hosts_path
-        Rails.logger.error "%s does not exists..." % Constants.zfs[:REPLICATION_HOSTS_PATH]
+        Rails.logger.error "%s does not exist..." % Constants.zfs[:REPLICATION_HOSTS_PATH]
         return
       end
 
       replication_hosts = File.read(replication_hosts_path)
       hosts = replication_hosts.split("\n")
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
+	  FileUtils.touch lock_path # Create lock
       hosts.each do |host|
         uri = URI.parse('//' + host)
         command = 'ionice -c 3 %s -r --sshport 2249 --source-bwlimit=100K --target-bwlimit=100K %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
@@ -135,19 +142,28 @@ module Utils
         Rails.logger.debug stdout
         Rails.logger.debug stderr
       end
+      FileUtils.rm lock_path # Remove lock
     end
 
     def self.replicate_to(name, host, **config)
+      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
+      lock_path = File.join('/', 'home', dataset, 'backup.lock')
+ 	  if File.exists? lock_path
+        Rails.logger.error "%s exists..." % lock_path
+      	return
+      end
+
+	  FileUtils.touch lock_path # Create lock
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
       syncoid_path = 'sudo ' + syncoid_path.to_s if config[:use_sudo]
       uri = URI.parse('//' + host)
-      dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
       command = 'ionice -c 3 %s -r --sshport 2249 --source-bwlimit=100K --target-bwlimit=100K %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
       Rails.logger.info "Running command: %s" % command
       stdout, stderr, status = Open3.capture3(command)
 
       Rails.logger.debug stdout
       Rails.logger.debug stderr
+      FileUtils.rm lock_path # Remove lock
     end
 
     def self.size(name)
