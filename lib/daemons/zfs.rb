@@ -96,6 +96,14 @@ begin
 		size = Utils::ZFS.size(container_name)
 		Rails.cache.write(container_name + Constants.cache[:CONTAINER_SIZE], size)
 	end
+
+	# On container backup, add it to replication queue
+	$backup_queue = Set.new
+	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_BACKUP], :auto_delete => false)
+	s.subscribe do |delivery_info, metadata, payload|
+		Rails.logger.info "Received backup request for container %s" % payload
+		$backup_queue.add payload if not Env.instance['BACKUP_HOST'].nil?
+	end
 rescue IO::EAGAINWaitReadable => err
 	Rails.logger.error err
 end
@@ -107,7 +115,7 @@ Signal.trap("TERM") do
 end
 
 while($running) do
-  # Dequeue a container to replication
+  # Dequeue a container to replicate
   if not $replication_queue.empty?
     container_name = $replication_queue.first
     Rails.logger.info "Replicating %s" % container_name
@@ -118,5 +126,18 @@ while($running) do
     end
     $replication_queue.delete container_name
   end
+
+  # Dequeue a container to backup
+  if not $backup_queue.empty?
+    container_name = $backup_queue.first
+    Rails.logger.info "Replicating %s" % container_name
+    begin
+      Utils::ZFS.replicate_to(container_name, Env.instance['BACKUP_HOST'])
+    rescue => err
+      Rails.logger.error err
+    end
+    $backup_queue.delete container_name
+  end
+
   sleep 10
 end
