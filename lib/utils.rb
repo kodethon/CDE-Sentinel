@@ -117,8 +117,8 @@ module Utils
 
     def self.replicate(name)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
-      mutex = Mutex(Constants.cache[:REPLICATE])
-      return if mutex.locked
+      mutex = Utils::Mutex.new(Constants.cache[:REPLICATE])
+      return if mutex.locked?
     
       replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])
       if not File.exists? replication_hosts_path
