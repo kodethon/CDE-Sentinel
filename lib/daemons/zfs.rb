@@ -15,9 +15,7 @@ Dir.chdir(root)
 require File.join(root, "config", "environment")
 require File.join(root, 'lib', 'env.rb')
 
-conn = Bunny.new("amqp://%s:%s" % [Env.instance['RABBITMQ_IP_ADDR'], Env.instance['RABBITMQ_PORT']])
-conn.start
-ch = conn.create_channel
+ch = CDE::RabbitMQ.channel
 
 begin
 	# Add root public key
@@ -99,10 +97,18 @@ begin
 
 	# On container backup, add it to replication queue
 	$backup_queue = Set.new
-	s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_BACKUP], :auto_delete => true)
-	s.subscribe do |delivery_info, metadata, payload|
+	w  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_BACKUP], :auto_delete => true)
+	w.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Received backup request for container %s" % payload
 		$backup_queue.add payload if not Env.instance['BACKUP_HOST'].nil?
+	end
+
+  # On container backup, add it to replication queue
+	$backup_queue = Set.new
+	x  = ch.queue(Constants.rabbitmq[:EVENTS][:ZFS_PING], :auto_delete => true)
+	x.subscribe do |delivery_info, metadata, payload|
+		Rails.logger.info "Received ping request"
+		Rails.cache.write(Constants.cache[:ZFS_PING], 'pong')
 	end
 rescue IO::EAGAINWaitReadable => err
 	Rails.logger.error 'Critical error found...'

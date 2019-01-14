@@ -6,7 +6,9 @@ class Constants
       :FC_ACCESS => 'fc.access',
       :ENV_ACCESS => 'env.access',
       :TERM_ACCESS => 'term.access',
-      :BACKUP_ACCESS => 'backup.access'
+      :BACKUP_ACCESS => 'backup.access',
+      :REPLICATE => 'replicate.access',
+      :ZFS_PING => 'zfs.ping'
     }
   end
 
@@ -30,6 +32,7 @@ class Constants
         :CONTAINER_CREATED => 'container.created',
         :CONTAINER_REPLICATE => 'container.replicate',
         :CONTAINER_SIZE => 'container.size',
+        :ZFS_PING => 'zfs.ping'
       }
     }
   end

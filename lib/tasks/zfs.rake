@@ -86,4 +86,27 @@ namespace :zfs do
       end
     end
   end # check_replication_hosts
+
+  desc "Ping zfs daemon, and try to restart if not alive"
+  task :ping_zfs_daemon => :environment do
+    ch = CDE::RabbitMQ.channel
+
+    q = ch.queue(
+      Constants.rabbitmq[:EVENTS][:ZFS_PING], :auto_delete => true)
+    x = ch.default_exchange
+    x.publish('ping', :routing_key => q.name)
+
+    sleep 1
+
+    res = Rails.cache.read(Constants.cache[:ZFS_PING])
+    if res == 'pong'
+       Rails.cache.write(Constants.cache[:ZFS_PING], '')
+    else
+      Rails.logger.info 'Restarting zfs daemon...'
+
+      stdout, stderr, status = Open3.capture3('sudo bundle exec rake daemon:zfs:restart')    
+      Rails.logger.info stdout
+      Rails.logger.info stderr
+    end
+  end
 end

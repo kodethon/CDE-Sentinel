@@ -46,6 +46,10 @@ if is_slave
   every 10.minutes do
     rake "zfs:replicate_priority_containers"
   end
+
+  every 1.minute do
+    rake "zfs:ping_zfs_daemon"
+  end
 end
 
 # Stop containers that have been idle for a long time
