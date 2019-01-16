@@ -107,8 +107,22 @@ module Utils
       Rails.logger.error "Creating dataset: %s" % dataset
       begin
         fs.create
-        FileUtils.chown('www-data', 'www-data', fs.mountpoint)
       rescue => err
+        Rails.logger.error 'Could not create dataset...'
+        Rails.logger.error err
+        return nil
+      end
+      begin
+        # Change the mount owner and group to www-data
+        FileUtils.chown('www-data', 'www-data', fs.mountpoint)
+        uid = File.stat(fs.mountpoint).uid
+        if uid == 0
+          # If folder is owned by root still, wait and try again
+          sleep 1
+          FileUtils.chown('www-data', 'www-data', fs.mountpoint)
+        end
+      rescue => err
+        Rails.logger.error 'Could not change dataset permission...'
         Rails.logger.error err
         return nil
       end
