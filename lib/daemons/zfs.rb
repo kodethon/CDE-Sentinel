@@ -137,7 +137,7 @@ while($running) do
   # Dequeue a container to backup
   if not $backup_queue.empty?
     container_name = $backup_queue.first
-    Rails.logger.info "Replicating %s" % container_name
+    Rails.logger.info "Backing up %s" % container_name
     begin
       Utils::ZFS.replicate_to(container_name, Env.instance['BACKUP_HOST'])
     rescue => err

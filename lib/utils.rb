@@ -131,8 +131,6 @@ module Utils
 
     def self.replicate(name)
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
-      mutex = Utils::Mutex.new(Constants.cache[:REPLICATE])
-      return if mutex.locked?
     
       replication_hosts_path = File.join(Rails.root.to_s, Constants.zfs[:REPLICATION_HOSTS_PATH])
       if not File.exists? replication_hosts_path
@@ -144,7 +142,6 @@ module Utils
       hosts = replication_hosts.split("\n")
       syncoid_path = Constants.zfs[:SYNCOID_PATH]
 
-      mutex.lock
       hosts.each do |host|
         uri = URI.parse('//' + host)
         command = 'ionice -c 3 %s -r --sshport 2249 --source-bwlimit=100K --target-bwlimit=100K %s root@%s:%s' % [syncoid_path, dataset, uri.host, dataset]
@@ -154,7 +151,6 @@ module Utils
         Rails.logger.debug stdout
         Rails.logger.debug stderr
       end
-      mutex.unlock
     end
 
     def self.replicate_to(name, host, **config)
