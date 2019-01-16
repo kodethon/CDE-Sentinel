@@ -103,8 +103,10 @@ module Utils
       dataset = File.join(Constants.zfs[:DRIVES_DATASET], name[0...2], name)
       fs = ZFS(dataset)
       return nil if not fs.parent.exist?
-      return fs if fs.exist?
+      return nil if fs.exist?
+
       Rails.logger.error "Creating dataset: %s" % dataset
+
       begin
         fs.create
       rescue => err
@@ -112,21 +114,27 @@ module Utils
         Rails.logger.error err
         return nil
       end
+
+      path = fs.mountpoint
+      success = self.chown_dataset(path)
+      Rails.logger.error 'Could not change dataset permission...' if not success
+
+      return path, success
+    end
+
+    def self.chown_dataset(path)
+      Rails.logger.info "Chowning %s..." % path
       begin
         # Change the mount owner and group to www-data
-        FileUtils.chown('www-data', 'www-data', fs.mountpoint)
-        uid = File.stat(fs.mountpoint).uid
-        if uid == 0
-          # If folder is owned by root still, wait and try again
-          sleep 1
-          FileUtils.chown('www-data', 'www-data', fs.mountpoint)
-        end
+        FileUtils.chown('www-data', 'www-data', path)
+        uid = File.stat(path).uid
+        return false if uid == 0
       rescue => err
-        Rails.logger.error 'Could not change dataset permission...'
         Rails.logger.error err
-        return nil
+        return false 
       end
-      return fs
+
+      true
     end
 
     def self.replicate(name)

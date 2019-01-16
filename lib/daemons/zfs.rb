@@ -63,12 +63,17 @@ begin
 	end
 
 	# On container create, create zfs dataset for container
+	$chown_queue = Set.new
 	t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 	t.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Creating dataset for container %s" % payload
 		begin
-			fs = Utils::ZFS.create(payload)
-			Rails.logger.error "Failed to create dataset for container %s" % payload if fs.nil?
+			mountpoint, chowned? = Utils::ZFS.create(payload)
+      if mountpoint.nil? 
+			  Rails.logger.error "Failed to create dataset for container %s" % payload 
+			else
+			  $backup_queue.add mountpoint if chowned?
+			end
 		rescue => err
 			Rails.logger.error err
 		end
@@ -144,6 +149,14 @@ while($running) do
       Rails.logger.error err
     end
     $backup_queue.delete container_name
+  end
+  
+  # Dequeue a mountpoint to try to chown
+  if not $chown_queue.empty?
+    mountpoint = $chown_queue.first
+    success = Utils::ZFS.chown_dataset(mountpoint)
+    $chown_queue.delete mountpoint
+    $chown_queue.add mountpoint if not success
   end
 
   sleep 10
