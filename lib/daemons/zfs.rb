@@ -68,11 +68,11 @@ begin
 	t.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Creating dataset for container %s" % payload
 		begin
-			mountpoint, chowned? = Utils::ZFS.create(payload)
+			mountpoint, chowned = Utils::ZFS.create(payload)
       if mountpoint.nil? 
 			  Rails.logger.error "Failed to create dataset for container %s" % payload 
 			else
-			  $backup_queue.add mountpoint if chowned?
+			  $chown_queue.add mountpoint if chowned
 			end
 		rescue => err
 			Rails.logger.error err
