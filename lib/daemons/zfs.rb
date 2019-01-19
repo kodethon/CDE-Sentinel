@@ -67,16 +67,12 @@ begin
 	t  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_CREATED], :auto_delete => true)
 	t.subscribe do |delivery_info, metadata, payload|
 		Rails.logger.info "Creating dataset for container %s" % payload
-		begin
 			mountpoint, chowned = Utils::ZFS.create(payload)
-      if mountpoint.nil? 
+			if mountpoint.nil? 
 			  Rails.logger.error "Failed to create dataset for container %s" % payload 
 			else
 			  $chown_queue.add mountpoint if chowned
 			end
-		rescue => err
-			Rails.logger.error err
-		end
 	end
 
 	# On container replicate, add it to replication queue
