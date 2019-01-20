@@ -97,7 +97,7 @@ module ClusterProxy
       raise 'Could not parse settings.yml' if settings.nil?
       url = get_master_endpoint('replication-hosts')
       send_get_request(url, {
-        group_name: Env.instance['GROUP_NAME'],
+        group_id: Env.instance['GROUP_ID'],
         password: Env.instance['GROUP_PASSWORD'],
         ip_addr: Env.instance['NODE_HOST'],
         port: Env.instance['NODE_PORT'],
@@ -123,39 +123,39 @@ module ClusterProxy
       return send_post_request(url, params)
     end
 
-    def update_disk_usage(group_name, container_name, disk_usage)
+    def update_disk_usage(group_id, container_name, disk_usage)
       url = get_master_endpoint('update-disk-usage')
       return nil if url.nil?
 
       return send_post_request(url, {
-         :group_name => group_name,
+         :group_id => group_id,
          :name => container_name,
          :disk_usage => disk_usage
       })
     end
 
-    def migrate_container(group_name, password, container_name, file_name)
+    def migrate_container(group_id, password, container_name, file_name)
       url = get_master_endpoint('migrate-container')
       return nil if url.nil?
 
       return send_post_request(url, {
         :hostname => Env.instance['NODE_HOST'],
         :port => Env.instance['NODE_PORT'],
-        :group_name => group_name,
+        :group_id => group_id,
         :password => password,
         :container_name => container_name,
         :file_name => file_name
       })
     end
 
-    def backup_container(group_name, password, container_name, file_name)
+    def backup_container(group_id, password, container_name, file_name)
       url = get_master_endpoint('backup-container')
       return nil if url.nil?
 
       return send_post_request(url, {
         :hostname => Env.instance['NODE_HOST'],
         :port => Env.instance['NODE_PORT'],
-        :group_name => group_name,
+        :group_id => group_id,
         :password => password,
         :container_name => container_name,
         :file_name => file_name
@@ -184,7 +184,7 @@ module ClusterProxy
       raise 'Could not parse settings.yml' if settings.nil?
 
       data = {
-        group_name: settings['application']['group_name'],
+        group_id: Env.instance['GROUP_ID'],
         password: Env.instance['GROUP_PASSWORD'],
         ip_addr: Env.instance['NODE_HOST'],
         port: Env.instance['NODE_PORT'],

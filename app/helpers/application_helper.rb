@@ -43,7 +43,7 @@ module ApplicationHelper
     proxy = ClusterProxy::Master.new
     return proxy.emit_to_master({
       :app_key => self.get_app_key(),
-      :group_name => settings['application']['group_name'],
+      :group_id => Env.instance['GROUP_ID'],
       :ip_addr => Env.instance['NODE_HOST'],
       :port => Env.instance['NODE_PORT'],
       :password => Env.instance['GROUP_PASSWORD'],
@@ -76,8 +76,9 @@ module ApplicationHelper
     if !res.nil? && res.code == '200'
       settings = ApplicationHelper.get_settings
       proxy = ClusterProxy::Master.new
-      group_name = settings["application"]["group_name"]
-      res = proxy.migrate_container(group_name, Env.instance['GROUP_PASSWORD'], container_name, res.body)
+      group_id = Env.instance['GROUP_ID']
+      group_password = Env.instance['GROUP_PASSWORD']
+      res = proxy.migrate_container(group_id, group_password, container_name, res.body)
     end
   end
 
@@ -90,8 +91,9 @@ module ApplicationHelper
       when '200'
         settings = ApplicationHelper.get_settings
         proxy = ClusterProxy::Master.new
-        group_name = settings["application"]["group_name"]
-        res = proxy.backup_container(group_name, Env.instance['GROUP_PASSWORD'], container_name, res.body)
+        group_id = Env.instance['GROUP_ID']
+        group_password = Env.instance['GROUP_PASSWORD']
+        res = proxy.backup_container(group_id, group_password, container_name, res.body)
       else
         Rails.logger.info(res.body)
       end
