@@ -61,7 +61,7 @@ t.subscribe do |delivery_info, metadata, payload|
     if mountpoint.nil? 
       Rails.logger.error "Failed to create dataset for container %s" % payload 
     else
-      $chown_queue.add mountpoint if chowned
+      $chown_queue.add mountpoint if not chowned
     end
 end
 

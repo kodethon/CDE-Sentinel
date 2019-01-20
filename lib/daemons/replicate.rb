@@ -3,7 +3,7 @@ require 'bunny'
 require 'set'
 
 # You might want to change this
-ENV["RAILS_ENV"] ||= "production"
+ENV["RAILS_ENV"] ||= "development"
 
 root = File.expand_path(File.dirname(__FILE__))
 root = File.dirname(root) until File.exists?(File.join(root, 'config'))
@@ -15,7 +15,6 @@ require File.join(root, 'lib', 'env.rb')
 ch = CDE::RabbitMQ.channel
 
 begin
-
   # On container modified, add it to replication queue
   $replication_queue = Set.new
   s  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_MODIFIED], :auto_delete => true)
@@ -57,6 +56,7 @@ end
 $running = true
 Signal.trap("TERM") do 
   $running = false
+  conn.close if not conn.nil?
 end
 
 while($running) do
@@ -84,6 +84,6 @@ while($running) do
     end
     $backup_queue.delete container_name
   end
-  
+
   sleep 10
 end
