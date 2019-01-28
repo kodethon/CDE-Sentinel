@@ -21,10 +21,12 @@ namespace :admin do
     res = ClusterProxy::Master.new.register(register_payload)
     Rails.logger.info 'Received response from Master...'
     return res if not ApplicationHelper.res_success?(res)
-
+    keys = res.body.split("\n")
+    return res if keys.length == 0
+debugger
     # Add returned public keys to authorized keys
     public_key_path = '/root/.ssh/authorized_keys'
-    keys = res.body.split("\n")
+    FileUtils.touch public_key_path if not File.exists? public_key_path
     contents = File.read(public_key_path)
     hosts = []
     for key in keys
