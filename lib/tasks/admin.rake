@@ -80,12 +80,12 @@ debugger
   def build_register_payload(settings)
     puts 'Building REGISTER payload.'
  
-    group_name = Env.instance['GROUP_NAME']
+    group_id= Env.instance['GROUP_ID']
     public_key = get_public_key
     root_public_key = get_root_public_key
     return if  public_key.nil? || root_public_key.nil?
     return {
-      group_name: group_name,
+      group_id: group_id,
       password: Env.instance['GROUP_PASSWORD'],
       public_key: public_key,
       app_type: Env.instance['NODE_APP_TYPE'],
@@ -118,7 +118,7 @@ debugger
   # See README for the Node Registration protocol details.
   # 
   # 1. Node sends REGISTER message to Master. The REGISTER message carries a
-  # payload of information which includes: group_name, group_password
+  # payload of information which includes: group_id, group_password
   # (node_password), and node public_key.
   # 2. Master verifies the group_password.  If it verifies, then it adds the
   # server to the group, and sends an OK message to Node.
