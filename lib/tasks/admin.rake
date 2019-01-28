@@ -23,7 +23,7 @@ namespace :admin do
     return res if not ApplicationHelper.res_success?(res)
     keys = res.body.split("\n")
     return res if keys.length == 0
-debugger
+
     # Add returned public keys to authorized keys
     public_key_path = '/root/.ssh/authorized_keys'
     FileUtils.touch public_key_path if not File.exists? public_key_path
