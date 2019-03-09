@@ -40,6 +40,7 @@ while($running) do
   #super_key4 = ['systemd', 'timeout']
   super_key4 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'sh']
   super_key5 = ['systemd', 'dockerd', 'docker-containe', 'docker-containe', 'timeout']
+  super_key6 = ['systemd', 'containerd', 'containerd-shim']
 
   # Get top highest CPU using processes
   stdout, stderr, status = Open3.capture3('ps -eo pcpu,user,pid,etimes,command | sort -k1 -r -n | head -10')
@@ -56,7 +57,7 @@ while($running) do
       processes = stdout.split('---')
 
       # Try to determine if the process is within a container
-      within_docker = within_docker?(processes, super_key1, super_key2, super_key3, super_key4, super_key5) 
+      within_docker = within_docker?(processes, super_key1, super_key2, super_key3, super_key4, super_key5, super_key6) 
         
       # If it is within a container, check if it has abnormal CPU usage
       if within_docker
