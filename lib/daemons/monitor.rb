@@ -72,8 +72,18 @@ while($running) do
           Rails.logger.info columns.join(' ')
           puts "Abnormal CPU usage process found, killing..."
           puts columns.join(' ')
-          Open3.capture3('sudo kill -9 ' + pid)
-        end
+
+          stdout, stderr, status = Open3.capture3('sudo kill -9 ' + pid)
+          if status.exitstatus != 0 # If not success
+            stdout, stderr, status = Open3.capture3(
+              "docker ps | awk '{print $1}' | xargs docker inspect -f '{{ .State.Pid }} {{ .Config.Hostname }}'  | grep %s | awk '{print $2}'" % pid)
+            if status.exitstatus == 0
+              Rails.logger.info "Killing container %s" % stdout
+              stdout, stderr, status = Open3.capture3("docker kill %s" % stdout)
+              Rails.logger.info "%s to kill the container..." % status.exitstatus == 0 ? 'Succeeded' : 'Failed'
+            end
+          end # if
+        end # if
       end
     end # if precent > 15
   end
