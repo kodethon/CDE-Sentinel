@@ -73,7 +73,7 @@ while($running) do
         # See if process was killed
         stdout, stderr, status = Open3.capture3('ps -aux | grep %s | awk {print $2}' % pid)
         rows = stdout.split("\n")
-        next if pid not in rows
+        next if not rows.include? pid
         Rails.logger.info "Process still alive, killing parent..."
 
         # If the proces was not killed, kill its parent
