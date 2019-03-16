@@ -71,7 +71,7 @@ while($running) do
         stdout, stderr, status = Open3.capture3('sudo kill -9 ' + pid)
 
         # See if process was killed
-        stdout, stderr, status = Open3.capture3('ps -aux | grep %s | awk {print $2}' % pid)
+        stdout, stderr, status = Open3.capture3("ps -aux | grep %s | awk '{print $2}'" % pid)
         rows = stdout.split("\n")
         next if not rows.include? pid
         Rails.logger.info "Process still alive, killing parent..."
