@@ -34,7 +34,7 @@ end
 while($running) do
   Rails.logger.info 'Checking proccess...'
 
-  super_key1 = ['systemd', 'containerd', 'containerd-shim', 'sh']
+  super_key1 = ['systemd', 'containerd', 'containerd-shim']
 
   # Get top highest CPU using processes
   stdout, stderr, status = Open3.capture3('ps -eo pcpu,user,pid,etimes,command | sort -k1 -r -n | head -10')
