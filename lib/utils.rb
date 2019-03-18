@@ -108,7 +108,8 @@ module Utils
       Rails.logger.error "Creating dataset: %s" % dataset
 
       begin
-        fs.create
+        #fs.create
+        stdout, stderr, status = Open3.capture3('sudo zfs create -o canmount=noauto %s && sudo zfs mount %s' % [dataset, dataset])
       rescue => err
         Rails.logger.error 'Could not create dataset...'
         Rails.logger.error err
