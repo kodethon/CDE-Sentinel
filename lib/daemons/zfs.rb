@@ -76,6 +76,20 @@ v.subscribe do |delivery_info, metadata, payload|
   Rails.cache.write(container_name + Constants.cache[:CONTAINER_SIZE], size)
 end
 
+# On container prioritize, add container to backup_list.txt
+v  = ch.queue(Constants.rabbitmq[:EVENTS][:CONTAINER_PRIORITIZE], :auto_delete => true)
+v.subscribe do |delivery_info, metadata, payload|
+  toks = payload.split('#')
+  container_name = toks[0]
+  host = toks[1]
+  Rails.logger.info "Received request to prioritize container %s..." % [container_name]
+  containers_list_path = File.join(Rails.root.to_s, Constants.zfs[:BACKUP_LIST_PATH])
+  FileUtils.touch containers_list_path if not File.exists? containers_list_path
+  open(containers_list_path, 'a') do |f|
+    f.puts container_name
+  end
+end
+
 $running = true
 Signal.trap("TERM") do 
   $running = false

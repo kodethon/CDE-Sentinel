@@ -32,6 +32,7 @@ class Constants
         :CONTAINER_CREATED => 'container.created',
         :CONTAINER_REPLICATE => 'container.replicate',
         :CONTAINER_SIZE => 'container.size',
+        :CONTAINER_PRIORITIZE => 'container.prioritize',
         :ZFS_PING => 'zfs.ping'
       }
     }
