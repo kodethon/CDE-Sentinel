@@ -49,7 +49,7 @@ gem 'daemons-rails'
 
 group :production do
 	# Docker api dependency
-	gem 'excon', '~> 0.52.0'
+	gem 'excon', '~> 0.71.0'
 end
 
 group :development, :test do
