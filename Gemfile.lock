@@ -51,7 +51,7 @@ GEM
     daemons-rails (1.2.1)
       daemons
       multi_json (~> 1.0)
-    dalli (2.7.6)
+    dalli (3.2.3)
     docker-api (1.32.1)
       excon (>= 0.38.0)
       json
